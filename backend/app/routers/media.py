@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.media import Media, MediaStatus, MediaType
 from app.services.cloudinary_service import upload_file
-from app.services.token_service import verify_contribution_token
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -85,7 +84,6 @@ def _detect_media_type(content: bytes) -> str | None:
 
 @router.post("/upload", dependencies=[Depends(rate_limit_upload)])
 async def upload_media(
-    token: str = Form(...),
     file: Optional[UploadFile] = File(None),
     legende: Optional[str] = Form(None),
     date_prise: Optional[date] = Form(None),
@@ -95,9 +93,6 @@ async def upload_media(
 ):
     if not rgpd_ok:
         raise HTTPException(status_code=400, detail="Vous devez accepter les conditions d'utilisation")
-
-    if not verify_contribution_token(db, token):
-        raise HTTPException(status_code=401, detail="Lien de contribution invalide ou expiré")
 
     # If no file is supplied, it is a text-only testimony!
     if not file:

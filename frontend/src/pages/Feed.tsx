@@ -148,6 +148,12 @@ export default function Feed() {
             <Link to="/histoire" className="text-white/70 hover:text-white text-xs uppercase tracking-widest transition-colors">
               Histoire
             </Link>
+            <Link
+              to="/contribuer"
+              className="bg-white/15 hover:bg-white/25 text-white text-xs uppercase tracking-widest transition-colors px-3 py-1.5 rounded-full border border-white/20"
+            >
+              + Publier
+            </Link>
             <button
               onClick={enterKiosk}
               className="text-white/60 hover:text-white transition-colors ml-2"

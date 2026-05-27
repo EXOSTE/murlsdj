@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadMedia } from "../lib/api";
 
-type UploadState = "idle" | "uploading" | "success" | "error" | "invalid_token";
+type UploadState = "idle" | "uploading" | "success" | "error";
 
 const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.85): Promise<Blob> => {
   return new Promise((resolve, reject) => {
@@ -53,16 +53,6 @@ const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 
 };
 
 export default function Contribute() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [token] = useState(() => searchParams.get("token") ?? "");
-
-  useEffect(() => {
-    if (searchParams.has("token")) {
-      setSearchParams({}, { replace: true });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const [tab, setTab] = useState<"media" | "testimony">("media");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -73,8 +63,6 @@ export default function Contribute() {
   const [state, setState] = useState<UploadState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!token) return <InvalidLink />;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -93,7 +81,6 @@ export default function Contribute() {
     setErrorMsg("");
 
     const formData = new FormData();
-    formData.append("token", token);
     formData.append("rgpd_ok", "true");
     if (datePrise) formData.append("date_prise", datePrise);
     if (auteur.trim()) formData.append("auteur", auteur.trim());
@@ -118,25 +105,23 @@ export default function Contribute() {
       await uploadMedia(formData);
       setState("success");
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) {
-        setState("invalid_token");
-      } else {
-        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-        setErrorMsg(detail ?? "Une erreur est survenue. Réessayez.");
-        setState("error");
-      }
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setErrorMsg(detail ?? "Une erreur est survenue. Réessayez.");
+      setState("error");
     }
   };
 
-  if (state === "invalid_token") return <InvalidLink />;
-
   return (
     <div className="min-h-screen bg-creme flex flex-col">
-      {/* Bande jaune top */}
       <div className="h-1 bg-jaune w-full shrink-0" />
+      <header className="flex items-center px-5 py-4">
+        <Link to="/" className="text-slate-400 hover:text-encre transition-colors text-sm flex items-center gap-1">
+          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+          Retour
+        </Link>
+      </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-12">
         <div className="w-full max-w-xl">
           <header className="mb-10 text-center">
             <p className="text-bleu text-xs tracking-widest uppercase mb-2">Le Silence des Justes · 30 ans</p>
@@ -320,14 +305,3 @@ function SuccessMessage() {
   );
 }
 
-function InvalidLink() {
-  return (
-    <div className="min-h-screen bg-creme flex flex-col items-center justify-center px-4 text-center">
-      <div className="h-1 bg-jaune w-full absolute top-0" />
-      <h1 className="font-serif text-2xl text-encre mb-3">Lien invalide</h1>
-      <p className="text-slate-500 text-sm max-w-sm">
-        Ce lien de contribution n'est pas valide ou a expiré. Contactez l'association pour obtenir un nouveau lien.
-      </p>
-    </div>
-  );
-}
