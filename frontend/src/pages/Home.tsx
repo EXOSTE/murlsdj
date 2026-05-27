@@ -219,7 +219,7 @@ export default function Home() {
             </div>
             
             <div className="space-y-3">
-              <p className="text-bleu text-xs tracking-wider uppercase font-semibold">1994 → 2024</p>
+              <p className="text-bleu text-xs tracking-wider uppercase font-semibold">1996 → 2026</p>
               <h2 className="font-serif text-3xl text-encre group-hover:text-bleu transition-colors">Fresque Chronologique</h2>
               <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
                 Revivez l'histoire de l'association. Parcourez 30 ans d'événements, d'inaugurations et de victoires collectives classés par année.
@@ -264,7 +264,7 @@ export default function Home() {
         <footer className="text-center py-10 border-t border-blue-100/55 relative z-10">
           <div className="flex items-center justify-center gap-3 text-slate-400">
             <div className="h-px w-8 bg-jaune" />
-            <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-bleu/80">Le Silence des Justes · 1994 – 2024</span>
+            <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-bleu/80">Le Silence des Justes · 1996 – 2026</span>
             <div className="h-px w-8 bg-jaune" />
           </div>
         </footer>
