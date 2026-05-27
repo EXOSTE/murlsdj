@@ -35,10 +35,12 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   const [liked, setLiked] = useState(() => localStorage.getItem(getLikedKey(item.id)) === "1");
   const [likesCount, setLikesCount] = useState(item.likes ?? 0);
   const [likeAnimating, setLikeAnimating] = useState(false);
+  const likePending = useRef(false);
 
   const [reposted, setReposted] = useState(() => localStorage.getItem(getRepostedKey(item.id)) === "1");
   const [repostsCount, setRepostsCount] = useState(item.reposts ?? 0);
   const [repostAnimating, setRepostAnimating] = useState(false);
+  const repostPending = useRef(false);
 
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -54,6 +56,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   }, [isActive]);
 
   const handleLike = async () => {
+    if (likePending.current) return;
+    likePending.current = true;
     const newLiked = !liked;
     setLiked(newLiked);
     if (newLiked) {
@@ -68,10 +72,14 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
       setLikesCount(res.likes);
     } catch {
       setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
+    } finally {
+      likePending.current = false;
     }
   };
 
   const handleRepost = async () => {
+    if (repostPending.current) return;
+    repostPending.current = true;
     const newReposted = !reposted;
     setReposted(newReposted);
     if (newReposted) {
@@ -86,6 +94,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
       setRepostsCount(res.reposts);
     } catch {
       setRepostsCount((c) => (newReposted ? c + 1 : Math.max(0, c - 1)));
+    } finally {
+      repostPending.current = false;
     }
   };
 

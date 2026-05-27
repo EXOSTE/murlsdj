@@ -234,20 +234,6 @@ def get_timeline(db: Session = Depends(get_db)):
     return [{"annee": r.annee, "count": r.count} for r in rows]
 
 
-@router.get("/{media_id}")
-def get_single_media(media_id: str, db: Session = Depends(get_db)):
-    from uuid import UUID
-    try:
-        uuid_val = UUID(media_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="ID de média invalide")
-    
-    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
-    if not m:
-        raise HTTPException(status_code=404, detail="Média introuvable ou non approuvé")
-    return _serialize(m)
-
-
 @router.get("/popular")
 def get_popular_media(
     page: int = 1,
@@ -270,6 +256,20 @@ def get_popular_media(
         "has_more": (page * per_page) < total,
         "items": [_serialize(m) for m in items],
     }
+
+
+@router.get("/{media_id}")
+def get_single_media(media_id: str, db: Session = Depends(get_db)):
+    from uuid import UUID
+    try:
+        uuid_val = UUID(media_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de média invalide")
+
+    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Média introuvable ou non approuvé")
+    return _serialize(m)
 
 
 @router.post("/{media_id}/like", dependencies=[Depends(rate_limit_like)])
