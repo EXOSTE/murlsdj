@@ -256,4 +256,5 @@ def _serialize(m: Media) -> dict:
         "date_prise": m.date_prise,
         "annee": m.annee,
         "approved_at": m.approved_at,
+        "likes": m.likes or 0,
     }

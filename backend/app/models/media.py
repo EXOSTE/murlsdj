@@ -30,3 +30,4 @@ class Media(Base):
     approved_at = Column(DateTime, nullable=True)
     uploaded_by = Column(String(255), nullable=True)
     raison_rejet = Column(Text, nullable=True)
+    likes = Column(Integer, nullable=False, default=0, server_default="0")
