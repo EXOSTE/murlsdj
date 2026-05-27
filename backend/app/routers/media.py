@@ -176,10 +176,8 @@ def get_stats(db: Session = Depends(get_db)):
     # Nombre de témoignages validés
     total_comments = db.query(Comment).filter(Comment.approved == True).count()
     
-    # Années d'histoire depuis 1994
-    years_of_history = datetime.datetime.now().year - 1994
-    if years_of_history < 30:
-        years_of_history = 30
+    # Années d'histoire (célébration des 30 ans)
+    years_of_history = 30
         
     return {
         "years_of_history": years_of_history,
