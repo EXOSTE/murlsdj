@@ -1,0 +1,162 @@
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { MediaItem } from "../lib/api";
+import { likeMedia } from "../lib/api";
+import CommentsPanel from "./CommentsPanel";
+import ShareModal from "./ShareModal";
+
+interface FeedSlideProps {
+  item: MediaItem;
+  isActive: boolean;
+  isKiosk: boolean;
+}
+
+function getLikedKey(id: string) {
+  return `lsdj_liked_${id}`;
+}
+
+export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
+  const isText = item.file_url?.startsWith("text://");
+  const authorName = isText ? item.file_url.replace("text://", "") : item.uploaded_by ?? null;
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const [liked, setLiked] = useState(() => localStorage.getItem(getLikedKey(item.id)) === "1");
+  const [likesCount, setLikesCount] = useState(item.likes ?? 0);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isActive) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [isActive]);
+
+  const handleLike = async () => {
+    if (liked) return;
+    setLiked(true);
+    setLikeAnimating(true);
+    localStorage.setItem(getLikedKey(item.id), "1");
+    setTimeout(() => setLikeAnimating(false), 600);
+    try {
+      const res = await likeMedia(item.id);
+      setLikesCount(res.likes);
+    } catch {
+      setLikesCount((c) => c + 1);
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full bg-black overflow-hidden">
+      {/* Média de fond */}
+      {isText ? (
+        <div className="absolute inset-0 bg-gradient-to-br from-bleu to-encre flex items-center justify-center p-8">
+          <p className="font-serif text-white/90 text-xl sm:text-2xl text-center italic leading-relaxed max-w-lg">
+            « {item.legende} »
+          </p>
+        </div>
+      ) : item.type === "video" ? (
+        <video
+          ref={videoRef}
+          src={item.file_url}
+          className="absolute inset-0 w-full h-full object-cover"
+          muted
+          loop
+          playsInline
+        />
+      ) : (
+        <img
+          src={item.file_url}
+          alt={item.legende ?? ""}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+      )}
+
+      {/* Overlay gradient bas */}
+      {!isKiosk && (
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+      )}
+
+      {/* Infos bas-gauche */}
+      {!isKiosk && (
+        <div className="absolute bottom-6 left-4 right-20 space-y-1 z-10">
+          {authorName && (
+            <p className="text-white font-semibold text-sm drop-shadow">{authorName}</p>
+          )}
+          {item.legende && !isText && (
+            <p className="text-white/80 text-sm leading-snug line-clamp-3 drop-shadow">{item.legende}</p>
+          )}
+          {item.date_prise && (
+            <p className="text-white/50 text-xs">
+              {new Date(item.date_prise).toLocaleDateString("fr-FR", { year: "numeric", month: "long" })}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Boutons bas-droit */}
+      {!isKiosk && (
+        <div className="absolute bottom-6 right-3 flex flex-col items-center gap-5 z-10">
+          {/* Like */}
+          <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+            <div className="relative w-8 h-8">
+              <AnimatePresence>
+                {likeAnimating && (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    initial={{ scale: 1, opacity: 1 }}
+                    animate={{ scale: 2.5, opacity: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <span className="text-2xl">❤️</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.div
+                animate={likeAnimating ? { scale: [1, 1.4, 1] } : {}}
+                transition={{ duration: 0.3 }}
+                className="w-full h-full"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`w-8 h-8 drop-shadow transition-colors ${liked ? "fill-red-500" : "fill-white/80 group-hover:fill-red-400"}`}
+                >
+                  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
+                </svg>
+              </motion.div>
+            </div>
+            <span className="text-white text-xs font-medium drop-shadow">{likesCount}</span>
+          </button>
+
+          {/* Commentaires */}
+          <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-1 group">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
+              <path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 0 0 6 21.75a6.721 6.721 0 0 0 3.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 0 1-.814 1.686.75.75 0 0 0 .44 1.223 6.676 6.676 0 0 0 .946.074Z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/* Partage */}
+          <button onClick={() => setShowShare(true)} className="flex flex-col items-center gap-1 group">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
+              <path fillRule="evenodd" d="M15.75 4.5a3 3 0 1 1 .825 2.066l-8.421 4.679a3.002 3.002 0 0 1 0 1.51l8.421 4.679a3 3 0 1 1-.729 1.31l-8.421-4.678a3 3 0 1 1 0-4.132l8.421-4.679a3 3 0 0 1-.096-.755Z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {showComments && (
+        <CommentsPanel mediaId={item.id} onClose={() => setShowComments(false)} />
+      )}
+
+      {showShare && (
+        <ShareModal mediaId={item.id} legende={item.legende} onClose={() => setShowShare(false)} />
+      )}
+    </div>
+  );
+}

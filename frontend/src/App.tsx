@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
+import Feed from "./pages/Feed";
 import Contribute from "./pages/Contribute";
 import Gallery from "./pages/Gallery";
 import Timeline from "./pages/Timeline";
@@ -11,7 +11,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Feed />} />
         <Route path="/contribuer" element={<Contribute />} />
         <Route path="/galerie" element={<Gallery />} />
         <Route path="/timeline" element={<Timeline />} />
@@ -22,4 +22,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
