@@ -63,7 +63,7 @@ export default function Intro({ onComplete }: IntroProps) {
         className="text-jaune text-xs tracking-widest uppercase mt-6"
         style={{ opacity: 0, transform: "translateY(8px)" }}
       >
-        Le Silence des Justes · 1994 – 2024
+        Le Silence des Justes · 1996 – 2026
       </p>
 
       <div
