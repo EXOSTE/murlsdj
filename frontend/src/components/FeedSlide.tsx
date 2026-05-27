@@ -37,16 +37,20 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   }, [isActive]);
 
   const handleLike = async () => {
-    if (liked) return;
-    setLiked(true);
-    setLikeAnimating(true);
-    localStorage.setItem(getLikedKey(item.id), "1");
-    setTimeout(() => setLikeAnimating(false), 600);
+    const newLiked = !liked;
+    setLiked(newLiked);
+    if (newLiked) {
+      setLikeAnimating(true);
+      setTimeout(() => setLikeAnimating(false), 600);
+      localStorage.setItem(getLikedKey(item.id), "1");
+    } else {
+      localStorage.removeItem(getLikedKey(item.id));
+    }
     try {
-      const res = await likeMedia(item.id);
+      const res = await likeMedia(item.id, newLiked ? "like" : "unlike");
       setLikesCount(res.likes);
     } catch {
-      setLikesCount((c) => c + 1);
+      setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
     }
   };
 

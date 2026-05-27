@@ -75,8 +75,8 @@ export const getStats = async (): Promise<AppStats> => {
   return res.data;
 };
 
-export const likeMedia = async (id: string): Promise<{ likes: number }> => {
-  const res = await api.post(`/api/media/${id}/like`);
+export const likeMedia = async (id: string, action: "like" | "unlike" = "like"): Promise<{ likes: number }> => {
+  const res = await api.post(`/api/media/${id}/like`, null, { params: { action } });
   return res.data;
 };
 

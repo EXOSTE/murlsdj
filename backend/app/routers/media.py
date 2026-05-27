@@ -249,7 +249,7 @@ def get_single_media(media_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{media_id}/like", dependencies=[Depends(rate_limit_like)])
-def like_media(media_id: str, db: Session = Depends(get_db)):
+def like_media(media_id: str, action: str = "like", db: Session = Depends(get_db)):
     from uuid import UUID
     try:
         uuid_val = UUID(media_id)
@@ -260,7 +260,10 @@ def like_media(media_id: str, db: Session = Depends(get_db)):
     if not m:
         raise HTTPException(status_code=404, detail="Média introuvable")
 
-    m.likes = (m.likes or 0) + 1
+    if action == "unlike":
+        m.likes = max(0, (m.likes or 0) - 1)
+    else:
+        m.likes = (m.likes or 0) + 1
     db.commit()
     db.refresh(m)
     return {"likes": m.likes}
