@@ -78,19 +78,32 @@ async def upload_media(
     else:
         raise HTTPException(status_code=415, detail="Format non supporté. Accepté : JPG, PNG, WebP, MP4, MOV, WebM")
 
-    uploaded = await upload_file(content, resource_type)
+    try:
+        uploaded = await upload_file(content, resource_type)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'upload cloud (Cloudinary) : {str(e)}. Veuillez verifier les variables d'environnement CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET."
+        )
 
-    media = Media(
-        file_url=uploaded["file_url"],
-        thumbnail_url=uploaded["thumbnail_url"],
-        type=media_type,
-        legende=legende.strip() if legende else None,
-        date_prise=date_prise,
-        annee=date_prise.year if date_prise else None,
-    )
-    db.add(media)
-    db.commit()
-    db.refresh(media)
+    try:
+        media = Media(
+            file_url=uploaded["file_url"],
+            thumbnail_url=uploaded["thumbnail_url"],
+            type=media_type,
+            legende=legende.strip() if legende else None,
+            date_prise=date_prise,
+            annee=date_prise.year if date_prise else None,
+        )
+        db.add(media)
+        db.commit()
+        db.refresh(media)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'enregistrement en base de données : {str(e)}. Veuillez verifier la variable d'environnement DATABASE_URL."
+        )
 
     return {"message": "Merci ! Votre contribution est en attente de validation.", "id": str(media.id)}
 

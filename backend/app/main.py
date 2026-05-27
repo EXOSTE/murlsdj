@@ -3,6 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import media, admin, comments
+from app.database import Base, engine
+# Import models to ensure they are registered on the Base metadata
+from app.models.media import Media
+from app.models.comment import Comment
+from app.models.settings import Setting
+
+# Create database tables automatically
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Warning: Database initialization failed: {e}")
 
 app = FastAPI(title="Mur LSDJ — Une infinité d'histoires", version="1.0.0")
 

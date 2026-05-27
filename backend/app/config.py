@@ -14,3 +14,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Normalize database URL to use the pg8000 driver
+if settings.DATABASE_URL.startswith("postgres://"):
+    settings.DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
+elif settings.DATABASE_URL.startswith("postgresql://"):
+    settings.DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
+

@@ -43,15 +43,22 @@ def create_comment(
     if len(content_clean) > 300:
         raise HTTPException(status_code=400, detail="Message trop long (max 300 caractères)")
 
-    comment = Comment(
-        media_id=media_uuid,
-        author=author_clean,
-        content=content_clean,
-        approved=False,
-    )
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
+    try:
+        comment = Comment(
+            media_id=media_uuid,
+            author=author_clean,
+            content=content_clean,
+            approved=False,
+        )
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'enregistrement du commentaire : {str(e)}"
+        )
 
     return {"message": "Témoignage envoyé. Il apparaîtra après modération."}
 
