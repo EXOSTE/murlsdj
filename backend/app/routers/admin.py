@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.media import Media, MediaStatus
 from app.models.settings import Setting
 from app.models.comment import Comment
-from app.services.token_service import verify_admin_secret
+from app.services.token_service import verify_admin_secret, get_setting
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -82,8 +82,8 @@ def unpublish_media(media_id: str, db: Session = Depends(get_db), _=Depends(chec
 
 @router.get("/token")
 def get_contribution_token(db: Session = Depends(get_db), _=Depends(check_admin)):
-    setting = db.query(Setting).filter(Setting.key == "contribution_token").first()
-    return {"token": setting.value if setting else None}
+    token_value = get_setting(db, "contribution_token")
+    return {"token": token_value}
 
 
 @router.post("/token/regenerate")
