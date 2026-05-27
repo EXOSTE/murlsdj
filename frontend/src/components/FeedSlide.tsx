@@ -61,10 +61,14 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
     }
   }, [isActive]);
 
+  // Sync muted via ref — React ne met pas à jour l'attribut muted du DOM après le premier render
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted]);
+
   const toggleMute = () => {
     globalMuted = !globalMuted;
     setMuted(globalMuted);
-    if (videoRef.current) videoRef.current.muted = globalMuted;
   };
 
   const handleLike = async () => {
@@ -130,7 +134,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           ref={videoRef}
           src={item.file_url}
           className="absolute inset-0 w-full h-full object-contain"
-          muted={muted}
+          muted
           loop
           playsInline
         />
