@@ -29,6 +29,7 @@ export interface MediaItem {
   uploaded_by?: string | null;
   status?: "pending" | "approved" | "rejected";
   raison_rejet?: string | null;
+  likes?: number;
 }
 
 export interface PublicMediaResponse {
@@ -71,6 +72,11 @@ export interface AppStats {
 
 export const getStats = async (): Promise<AppStats> => {
   const res = await api.get("/api/media/stats");
+  return res.data;
+};
+
+export const likeMedia = async (id: string): Promise<{ likes: number }> => {
+  const res = await api.post(`/api/media/${id}/like`);
   return res.data;
 };
 
