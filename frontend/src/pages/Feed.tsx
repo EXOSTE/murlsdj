@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { getPublicMedia } from "../lib/api";
+import { getPublicMedia, getPopularMedia } from "../lib/api";
 import type { MediaItem } from "../lib/api";
 import FeedSlide from "../components/FeedSlide";
 
-export default function Feed() {
+interface FeedProps {
+  popular?: boolean;
+}
+
+export default function Feed({ popular = false }: FeedProps) {
   const [searchParams] = useSearchParams();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [page, setPage] = useState(1);
@@ -15,14 +19,14 @@ export default function Feed() {
   const containerRef = useRef<HTMLDivElement>(null);
   const kioskTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const loadingRef = useRef(false);
-  const initialMediaId = searchParams.get("media");
+  const initialMediaId = popular ? null : searchParams.get("media");
 
   const loadPage = useCallback(async (p: number) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
     try {
-      const res = await getPublicMedia(p, undefined);
+      const res = popular ? await getPopularMedia(p) : await getPublicMedia(p, undefined);
       setItems((prev) => (p === 1 ? res.items : [...prev, ...res.items]));
       setHasMore(res.has_more);
       setPage(p);
@@ -30,9 +34,12 @@ export default function Feed() {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, []);
+  }, [popular]);
 
   useEffect(() => {
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
     loadPage(1);
   }, [loadPage]);
 
@@ -138,15 +145,22 @@ export default function Feed() {
           <span className="font-serif text-white text-lg tracking-wide drop-shadow pointer-events-none">
             Mur LSDJ
           </span>
-          <nav className="flex items-center gap-4 pointer-events-auto">
+          <nav className="flex items-center gap-3 pointer-events-auto">
+            <Link
+              to="/"
+              className={`text-xs uppercase tracking-widest transition-colors ${!popular ? "text-white font-semibold" : "text-white/70 hover:text-white"}`}
+            >
+              Récent
+            </Link>
+            <Link
+              to="/populaire"
+              className={`flex items-center gap-1 text-xs uppercase tracking-widest transition-colors ${popular ? "text-white font-semibold" : "text-white/70 hover:text-white"}`}
+            >
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+              Populaire
+            </Link>
             <Link to="/galerie" className="text-white/70 hover:text-white text-xs uppercase tracking-widest transition-colors">
               Galerie
-            </Link>
-            <Link to="/timeline" className="text-white/70 hover:text-white text-xs uppercase tracking-widest transition-colors">
-              Timeline
-            </Link>
-            <Link to="/histoire" className="text-white/70 hover:text-white text-xs uppercase tracking-widest transition-colors">
-              Histoire
             </Link>
             <Link
               to="/contribuer"
@@ -156,7 +170,7 @@ export default function Feed() {
             </Link>
             <button
               onClick={enterKiosk}
-              className="text-white/60 hover:text-white transition-colors ml-2"
+              className="text-white/60 hover:text-white transition-colors"
               title="Mode kiosque"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -165,6 +179,13 @@ export default function Feed() {
             </button>
           </nav>
         </header>
+      )}
+
+      {/* Badge mode populaire */}
+      {popular && !isKiosk && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 bg-white/10 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full border border-white/20">
+          🔥 Top souvenirs
+        </div>
       )}
 
       {/* Feed */}

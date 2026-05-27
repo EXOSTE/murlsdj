@@ -30,6 +30,8 @@ export interface MediaItem {
   status?: "pending" | "approved" | "rejected";
   raison_rejet?: string | null;
   likes?: number;
+  reposts?: number;
+  shares?: number;
 }
 
 export interface PublicMediaResponse {
@@ -77,6 +79,20 @@ export const getStats = async (): Promise<AppStats> => {
 
 export const likeMedia = async (id: string, action: "like" | "unlike" = "like"): Promise<{ likes: number }> => {
   const res = await api.post(`/api/media/${id}/like`, null, { params: { action } });
+  return res.data;
+};
+
+export const repostMedia = async (id: string, action: "repost" | "unrepost" = "repost"): Promise<{ reposts: number }> => {
+  const res = await api.post(`/api/media/${id}/repost`, null, { params: { action } });
+  return res.data;
+};
+
+export const shareMedia = async (id: string): Promise<void> => {
+  await api.post(`/api/media/${id}/share`).catch(() => {});
+};
+
+export const getPopularMedia = async (page = 1): Promise<PublicMediaResponse> => {
+  const res = await api.get("/api/media/popular", { params: { page, per_page: 10 } });
   return res.data;
 };
 

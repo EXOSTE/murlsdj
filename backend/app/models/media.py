@@ -31,3 +31,5 @@ class Media(Base):
     uploaded_by = Column(String(255), nullable=True)
     raison_rejet = Column(Text, nullable=True)
     likes = Column(Integer, nullable=False, default=0, server_default="0")
+    reposts = Column(Integer, nullable=False, default=0, server_default="0")
+    shares = Column(Integer, nullable=False, default=0, server_default="0")

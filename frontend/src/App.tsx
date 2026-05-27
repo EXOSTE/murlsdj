@@ -12,6 +12,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Feed />} />
+        <Route path="/populaire" element={<Feed popular />} />
         <Route path="/contribuer" element={<Contribute />} />
         <Route path="/galerie" element={<Gallery />} />
         <Route path="/timeline" element={<Timeline />} />

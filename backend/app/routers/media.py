@@ -248,6 +248,30 @@ def get_single_media(media_id: str, db: Session = Depends(get_db)):
     return _serialize(m)
 
 
+@router.get("/popular")
+def get_popular_media(
+    page: int = 1,
+    per_page: int = 10,
+    db: Session = Depends(get_db),
+):
+    score_expr = Media.likes + Media.reposts * 2 + Media.shares
+    query = db.query(Media).filter(Media.status == MediaStatus.approved)
+    total = query.count()
+    items = (
+        query.order_by(score_expr.desc(), Media.approved_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+    return {
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "has_more": (page * per_page) < total,
+        "items": [_serialize(m) for m in items],
+    }
+
+
 @router.post("/{media_id}/like", dependencies=[Depends(rate_limit_like)])
 def like_media(media_id: str, action: str = "like", db: Session = Depends(get_db)):
     from uuid import UUID
@@ -269,6 +293,44 @@ def like_media(media_id: str, action: str = "like", db: Session = Depends(get_db
     return {"likes": m.likes}
 
 
+@router.post("/{media_id}/repost")
+def repost_media(media_id: str, action: str = "repost", db: Session = Depends(get_db)):
+    from uuid import UUID
+    try:
+        uuid_val = UUID(media_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de média invalide")
+
+    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Média introuvable")
+
+    if action == "unrepost":
+        m.reposts = max(0, (m.reposts or 0) - 1)
+    else:
+        m.reposts = (m.reposts or 0) + 1
+    db.commit()
+    db.refresh(m)
+    return {"reposts": m.reposts}
+
+
+@router.post("/{media_id}/share")
+def share_media(media_id: str, db: Session = Depends(get_db)):
+    from uuid import UUID
+    try:
+        uuid_val = UUID(media_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de média invalide")
+
+    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Média introuvable")
+
+    m.shares = (m.shares or 0) + 1
+    db.commit()
+    return {"shares": m.shares}
+
+
 def _serialize(m: Media) -> dict:
     return {
         "id": str(m.id),
@@ -280,4 +342,6 @@ def _serialize(m: Media) -> dict:
         "annee": m.annee,
         "approved_at": m.approved_at,
         "likes": m.likes or 0,
+        "reposts": m.reposts or 0,
+        "shares": m.shares or 0,
     }

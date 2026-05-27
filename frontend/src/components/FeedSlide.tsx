@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem } from "../lib/api";
-import { likeMedia } from "../lib/api";
+import { likeMedia, repostMedia, shareMedia } from "../lib/api";
 import CommentsPanel from "./CommentsPanel";
 import ShareModal from "./ShareModal";
 
@@ -11,9 +11,8 @@ interface FeedSlideProps {
   isKiosk: boolean;
 }
 
-function getLikedKey(id: string) {
-  return `lsdj_liked_${id}`;
-}
+function getLikedKey(id: string) { return `lsdj_liked_${id}`; }
+function getRepostedKey(id: string) { return `lsdj_reposted_${id}`; }
 
 export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   const isText = item.file_url?.startsWith("text://");
@@ -23,6 +22,11 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   const [liked, setLiked] = useState(() => localStorage.getItem(getLikedKey(item.id)) === "1");
   const [likesCount, setLikesCount] = useState(item.likes ?? 0);
   const [likeAnimating, setLikeAnimating] = useState(false);
+
+  const [reposted, setReposted] = useState(() => localStorage.getItem(getRepostedKey(item.id)) === "1");
+  const [repostsCount, setRepostsCount] = useState(item.reposts ?? 0);
+  const [repostAnimating, setRepostAnimating] = useState(false);
+
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
 
@@ -52,6 +56,29 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
     } catch {
       setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
     }
+  };
+
+  const handleRepost = async () => {
+    const newReposted = !reposted;
+    setReposted(newReposted);
+    if (newReposted) {
+      setRepostAnimating(true);
+      setTimeout(() => setRepostAnimating(false), 600);
+      localStorage.setItem(getRepostedKey(item.id), "1");
+    } else {
+      localStorage.removeItem(getRepostedKey(item.id));
+    }
+    try {
+      const res = await repostMedia(item.id, newReposted ? "repost" : "unrepost");
+      setRepostsCount(res.reposts);
+    } catch {
+      setRepostsCount((c) => (newReposted ? c + 1 : Math.max(0, c - 1)));
+    }
+  };
+
+  const handleOpenShare = () => {
+    shareMedia(item.id);
+    setShowShare(true);
   };
 
   return (
@@ -145,10 +172,26 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
             </svg>
           </button>
 
-          {/* Partage */}
-          <button onClick={() => setShowShare(true)} className="flex flex-col items-center gap-1 group">
+          {/* Repost (deux flèches circulaires) */}
+          <button onClick={handleRepost} className="flex flex-col items-center gap-1 group">
+            <motion.div
+              animate={repostAnimating ? { rotate: [0, 360] } : {}}
+              transition={{ duration: 0.5 }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className={`w-8 h-8 drop-shadow transition-colors ${reposted ? "fill-green-400" : "fill-white/80 group-hover:fill-green-300"}`}
+              >
+                <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+              </svg>
+            </motion.div>
+            <span className="text-white text-xs font-medium drop-shadow">{repostsCount}</span>
+          </button>
+
+          {/* Partage (flèche TikTok) */}
+          <button onClick={handleOpenShare} className="flex flex-col items-center gap-1 group">
             <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
-              <path fillRule="evenodd" d="M15.75 4.5a3 3 0 1 1 .825 2.066l-8.421 4.679a3.002 3.002 0 0 1 0 1.51l8.421 4.679a3 3 0 1 1-.729 1.31l-8.421-4.678a3 3 0 1 1 0-4.132l8.421-4.679a3 3 0 0 1-.096-.755Z" clipRule="evenodd" />
+              <path d="M13.12 2.06 7.58 7.6c-.38.38-.11 1.02.42 1.02H11v8c0 .55.45 1 1 1s1-.45 1-1V8.62h3c.53 0 .8-.64.42-1.02L13.88 2.06a.54.54 0 0 0-.76 0zM21 15l-.01 3c0 1.1-.89 2-1.99 2H5c-1.1 0-2-.9-2-2v-3c0-.55.45-1 1-1s1 .45 1 1v3h14v-3c0-.55.45-1 1-1s1 .45 1 1z" />
             </svg>
           </button>
         </div>
