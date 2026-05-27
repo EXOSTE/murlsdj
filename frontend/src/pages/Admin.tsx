@@ -8,6 +8,9 @@ import {
   getContributionToken,
   regenerateToken,
   unpublishMedia,
+  deleteMedia,
+  bulkApproveMedia,
+  bulkRejectMedia,
   getPendingComments,
   approveComment,
   rejectComment,
@@ -29,6 +32,8 @@ export default function Admin() {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [copied, setCopied] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const [inputSecret, setInputSecret] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -94,13 +99,62 @@ export default function Admin() {
   const handleApprove = async (id: string) => {
     await approveMedia(id, secret);
     setPending((p) => p.filter((m) => m.id !== id));
+    setSelectedIds((s) => { const n = new Set(s); n.delete(id); return n; });
   };
 
   const handleReject = async (id: string) => {
     await rejectMedia(id, secret, rejectReason || undefined);
     setPending((p) => p.filter((m) => m.id !== id));
+    setSelectedIds((s) => { const n = new Set(s); n.delete(id); return n; });
     setRejectingId(null);
     setRejectReason("");
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer définitivement ce média ? Cette action est irréversible.")) return;
+    await deleteMedia(id, secret);
+    setPublished((p) => p.filter((m) => m.id !== id));
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === pending.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pending.map((m) => m.id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      await bulkApproveMedia([...selectedIds], secret);
+      setPending((p) => p.filter((m) => !selectedIds.has(m.id)));
+      setSelectedIds(new Set());
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Rejeter ${selectedIds.size} éléments ?`)) return;
+    setBulkLoading(true);
+    try {
+      await bulkRejectMedia([...selectedIds], secret);
+      setPending((p) => p.filter((m) => !selectedIds.has(m.id)));
+      setSelectedIds(new Set());
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   const handleApproveComment = async (id: string) => {
@@ -222,15 +276,33 @@ export default function Admin() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`py-3 px-5 text-sm border-b-2 transition-colors ${
+              className={`relative py-3 px-5 text-sm border-b-2 transition-colors ${
                 tab === t
                   ? "border-bleu text-bleu font-medium"
                   : "border-transparent text-slate-400 hover:text-slate-600"
               }`}
             >
-              {t === "pending" && `En attente (${pending.length})`}
+              {t === "pending" && (
+                <span className="flex items-center gap-1.5">
+                  En attente
+                  {pending.length > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {pending.length}
+                    </span>
+                  )}
+                </span>
+              )}
               {t === "published" && "Publiés"}
-              {t === "comments" && `Témoignages (${pendingComments.length})`}
+              {t === "comments" && (
+                <span className="flex items-center gap-1.5">
+                  Témoignages
+                  {pendingComments.length > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {pendingComments.length}
+                    </span>
+                  )}
+                </span>
+              )}
               {t === "token" && "Lien contribution"}
             </button>
           ))}
@@ -244,10 +316,51 @@ export default function Admin() {
             {pending.length === 0 && (
               <p className="text-slate-400 text-center py-16">Aucune contribution en attente.</p>
             )}
+            {pending.length > 0 && (
+              <div className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl px-4 py-3">
+                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === pending.length}
+                    onChange={toggleSelectAll}
+                    className="accent-bleu"
+                  />
+                  Tout sélectionner
+                </label>
+                {selectedIds.size > 0 && (
+                  <>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs text-slate-400">{selectedIds.size} sélectionné(s)</span>
+                    <button
+                      onClick={handleBulkApprove}
+                      disabled={bulkLoading}
+                      className="ml-auto text-xs bg-bleu text-white px-4 py-1.5 rounded-lg hover:bg-encre disabled:opacity-40"
+                    >
+                      Approuver tout
+                    </button>
+                    <button
+                      onClick={handleBulkReject}
+                      disabled={bulkLoading}
+                      className="text-xs border border-red-200 text-red-500 px-4 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                    >
+                      Rejeter tout
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             {pending.map((item) => {
               const isText = item.file_url?.startsWith("text://");
               return (
               <div key={item.id} className="bg-white rounded-xl border border-blue-100 overflow-hidden flex gap-0">
+                <div className="flex items-center px-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    className="accent-bleu w-4 h-4"
+                  />
+                </div>
                 <div className="w-44 shrink-0 bg-blue-50 overflow-hidden flex items-center justify-center self-stretch">
                   {isText ? (
                     <div className="w-full h-full bg-gradient-to-br from-bleu to-encre flex items-center justify-center p-3">
@@ -364,21 +477,32 @@ export default function Admin() {
                   className="w-full h-full object-cover"
                 />
                 )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                   <button
                     onClick={() => handleUnpublish(item.id)}
                     className="text-xs bg-white text-encre px-3 py-1.5 rounded-lg hover:bg-blue-50"
                   >
                     Dépublier
                   </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600"
+                  >
+                    Supprimer
+                  </button>
                 </div>
+                {(item.reports ?? 0) > 0 && (
+                  <span className="absolute top-2 right-2 text-[10px] bg-red-500/80 text-white px-1.5 py-0.5 rounded-full">
+                    ⚑ {item.reports}
+                  </span>
+                )}
                 {item.annee && (
                   <span className="absolute top-2 left-2 text-xs bg-black/50 text-white px-2 py-0.5 rounded-full">
                     {item.annee}
                   </span>
                 )}
                 {isTextPub && (
-                  <span className="absolute top-2 right-2 text-[10px] bg-indigo-600/80 text-white px-1.5 py-0.5 rounded-full">
+                  <span className="absolute bottom-2 right-2 text-[10px] bg-indigo-600/80 text-white px-1.5 py-0.5 rounded-full">
                     texte
                   </span>
                 )}

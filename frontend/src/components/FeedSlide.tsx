@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem } from "../lib/api";
-import { likeMedia, repostMedia, shareMedia } from "../lib/api";
+import { likeMedia, repostMedia, shareMedia, reportMedia } from "../lib/api";
 import CommentsPanel from "./CommentsPanel";
 import ShareModal from "./ShareModal";
 
@@ -49,6 +49,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
 
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [reported, setReported] = useState(false);
+  const reportPending = useRef(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -118,6 +120,19 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   const handleOpenShare = () => {
     shareMedia(item.id);
     setShowShare(true);
+  };
+
+  const handleReport = async () => {
+    if (reportPending.current || reported) return;
+    reportPending.current = true;
+    try {
+      await reportMedia(item.id);
+      setReported(true);
+    } catch {
+      // silencieux
+    } finally {
+      reportPending.current = false;
+    }
   };
 
   return (
@@ -247,6 +262,13 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           <button onClick={handleOpenShare} className="flex flex-col items-center gap-1 group">
             <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
               <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z" />
+            </svg>
+          </button>
+
+          {/* Signaler */}
+          <button onClick={handleReport} className="flex flex-col items-center gap-1 group" title="Signaler ce contenu">
+            <svg viewBox="0 0 24 24" className={`w-6 h-6 drop-shadow transition-colors ${reported ? "fill-orange-400" : "fill-white/40 group-hover:fill-orange-300"}`}>
+              <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
             </svg>
           </button>
         </div>

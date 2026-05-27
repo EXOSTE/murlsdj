@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import MasonryGrid from "../components/MasonryGrid";
 import Lightbox from "../components/Lightbox";
 import CinematicShow from "../components/CinematicShow";
@@ -11,51 +11,70 @@ export default function Gallery() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [filterVersion, setFilterVersion] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showCinematic, setShowCinematic] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "photo" | "video">("all");
   const [filterYear, setFilterYear] = useState<number | null>(null);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadMore = useCallback(async () => {
-    if (isLoading || !hasMore) return;
+  const loadMore = useCallback(async (forcePage?: number) => {
+    if (isLoading) return;
+    const p = forcePage ?? page;
+    if (!hasMore && forcePage === undefined) return;
     setIsLoading(true);
     try {
-      const res = await getPublicMedia(page, filterYear ?? undefined);
-      setItems((prev) => [...prev, ...res.items]);
+      const res = await getPublicMedia(p, filterYear ?? undefined, debouncedSearch || undefined);
+      setItems((prev) => (p === 1 ? res.items : [...prev, ...res.items]));
       setHasMore(res.has_more);
-      setPage((p) => p + 1);
+      setPage(p + 1);
     } finally {
       setIsLoading(false);
     }
-  }, [page, isLoading, hasMore, filterYear]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, isLoading, hasMore, filterYear, debouncedSearch]);
 
+  // Charger la première page au démarrage
   useEffect(() => {
-    loadMore();
+    loadMore(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Recharger quand les filtres changent (filterVersion s'incrémente)
+  useEffect(() => {
+    if (filterVersion === 0) return;
+    loadMore(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterVersion]);
 
   // Load available years for filter
   useEffect(() => {
     getTimeline().then((data) => setAvailableYears(data.map((d) => d.annee)));
   }, []);
 
-  // Reset gallery when year filter changes
+  // Reset gallery when filters change
   useEffect(() => {
     setItems([]);
     setPage(1);
     setHasMore(true);
-  }, [filterYear]);
+    setFilterVersion((v) => v + 1);
+  }, [filterYear, debouncedSearch]);
 
+  // Debounce search input (400ms)
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 400);
+  };
+
+  // Client-side type filter only (type filter not in backend)
   const filteredItems = items.filter((item) => {
-    const matchesSearch = item.legende
-      ? item.legende.toLowerCase().includes(searchQuery.toLowerCase())
-      : false;
-    const matchesType = filterType === "all" || item.type === filterType;
-    return (searchQuery ? matchesSearch : true) && matchesType;
+    return filterType === "all" || item.type === filterType;
   });
 
   // Deep linking effects
@@ -159,7 +178,7 @@ export default function Gallery() {
                 type="text"
                 placeholder="Rechercher un souvenir (ex: sortie, anniversaire...)"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full bg-creme border border-blue-50/50 rounded-xl pl-10 pr-4 py-2.5 text-xs text-encre placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-bleu"
               />
             </div>
@@ -238,7 +257,7 @@ export default function Gallery() {
         ) : (
           <MasonryGrid
             items={filteredItems}
-            onLoadMore={loadMore}
+            onLoadMore={() => loadMore()}
             hasMore={hasMore}
             isLoading={isLoading}
             onMediaClick={setLightboxIndex}

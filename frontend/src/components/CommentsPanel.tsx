@@ -11,6 +11,7 @@ interface CommentsPanelProps {
 export default function CommentsPanel({ mediaId, onClose }: CommentsPanelProps) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [author, setAuthor] = useState("");
   const [content, setContent] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -19,11 +20,12 @@ export default function CommentsPanel({ mediaId, onClose }: CommentsPanelProps) 
 
   const loadComments = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await getComments(mediaId);
       setComments(data);
     } catch {
-      // silently fail
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,13 @@ export default function CommentsPanel({ mediaId, onClose }: CommentsPanelProps) 
 
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {loading && <p className="text-slate-400 text-sm text-center">Chargement…</p>}
-            {!loading && comments.length === 0 && (
+            {!loading && loadError && (
+              <div className="text-center pt-8 space-y-2">
+                <p className="text-red-400 text-sm">Impossible de charger les commentaires.</p>
+                <button onClick={loadComments} className="text-bleu text-xs underline">Réessayer</button>
+              </div>
+            )}
+            {!loading && !loadError && comments.length === 0 && (
               <p className="text-slate-400 text-sm text-center pt-8">Aucun commentaire pour l'instant.</p>
             )}
             {comments.map((c) => (

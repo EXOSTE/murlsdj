@@ -32,6 +32,7 @@ export interface MediaItem {
   likes?: number;
   reposts?: number;
   shares?: number;
+  reports?: number;
 }
 
 export interface PublicMediaResponse {
@@ -69,9 +70,10 @@ export const registerMedia = async (formData: FormData) => {
   return res.data;
 };
 
-export const getPublicMedia = async (page = 1, annee?: number): Promise<PublicMediaResponse> => {
+export const getPublicMedia = async (page = 1, annee?: number, search?: string): Promise<PublicMediaResponse> => {
   const params: Record<string, unknown> = { page, per_page: 24 };
   if (annee) params.annee = annee;
+  if (search && search.trim()) params.search = search.trim();
   const res = await api.get("/api/media/public", { params });
   return res.data;
 };
@@ -109,6 +111,10 @@ export const repostMedia = async (id: string, action: "repost" | "unrepost" = "r
 
 export const shareMedia = async (id: string): Promise<void> => {
   await api.post(`/api/media/${id}/share`).catch(() => {});
+};
+
+export const reportMedia = async (id: string): Promise<void> => {
+  await api.post(`/api/media/${id}/report`);
 };
 
 export const getPopularMedia = async (page = 1): Promise<PublicMediaResponse> => {
@@ -169,6 +175,27 @@ export const getAllMedia = async (secret: string, status?: string) => {
 export const unpublishMedia = async (id: string, secret: string) => {
   const res = await api.post(`/api/admin/unpublish/${id}`, null, {
     headers: { "X-Admin-Secret": secret },
+  });
+  return res.data;
+};
+
+export const deleteMedia = async (id: string, secret: string) => {
+  const res = await api.delete(`/api/admin/delete/${id}`, {
+    headers: { "X-Admin-Secret": secret },
+  });
+  return res.data;
+};
+
+export const bulkApproveMedia = async (ids: string[], secret: string) => {
+  const res = await api.post("/api/admin/bulk-approve", ids, {
+    headers: { "X-Admin-Secret": secret, "Content-Type": "application/json" },
+  });
+  return res.data;
+};
+
+export const bulkRejectMedia = async (ids: string[], secret: string) => {
+  const res = await api.post("/api/admin/bulk-reject", ids, {
+    headers: { "X-Admin-Secret": secret, "Content-Type": "application/json" },
   });
   return res.data;
 };

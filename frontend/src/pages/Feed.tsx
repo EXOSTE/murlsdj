@@ -21,7 +21,7 @@ export default function Feed({ popular = false }: FeedProps) {
   const loadingRef = useRef(false);
   const wheelCooldown = useRef(false);
   const activeIndexRef = useRef(0);
-  const initialMediaId = popular ? null : searchParams.get("media");
+  const initialMediaId = searchParams.get("media");
 
   const loadPage = useCallback(async (p: number) => {
     if (loadingRef.current) return;

@@ -35,6 +35,8 @@ class InMemoryRateLimiter:
 
 upload_limiter = InMemoryRateLimiter(requests_limit=5, window_seconds=60)
 like_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=60)
+share_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
+report_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=300)
 
 
 def rate_limit_upload(request: Request):
@@ -50,6 +52,18 @@ def rate_limit_like(request: Request):
     client_ip = request.client.host if request.client else "unknown"
     if not like_limiter.is_allowed(client_ip):
         raise HTTPException(status_code=429, detail="Trop de likes. Veuillez patienter.")
+
+
+def rate_limit_share(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not share_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="Trop de partages. Veuillez patienter.")
+
+
+def rate_limit_report(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not report_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="Signalement déjà enregistré.")
 
 
 router = APIRouter(prefix="/api/media", tags=["media"])
@@ -174,12 +188,16 @@ def get_public_media(
     page: int = 1,
     per_page: int = 24,
     annee: Optional[int] = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     query = db.query(Media).filter(Media.status == MediaStatus.approved)
 
     if annee:
         query = query.filter(Media.annee == annee)
+
+    if search and search.strip():
+        query = query.filter(Media.legende.ilike(f"%{search.strip()}%"))
 
     total = query.count()
     items = (
@@ -374,7 +392,24 @@ def repost_media(media_id: str, action: str = "repost", db: Session = Depends(ge
     return {"reposts": m.reposts}
 
 
-@router.post("/{media_id}/share")
+@router.post("/{media_id}/report", dependencies=[Depends(rate_limit_report)])
+def report_media(media_id: str, db: Session = Depends(get_db)):
+    from uuid import UUID
+    try:
+        uuid_val = UUID(media_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de média invalide")
+
+    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Média introuvable")
+
+    m.reports = (m.reports or 0) + 1
+    db.commit()
+    return {"message": "Signalement enregistré"}
+
+
+@router.post("/{media_id}/share", dependencies=[Depends(rate_limit_share)])
 def share_media(media_id: str, db: Session = Depends(get_db)):
     from uuid import UUID
     try:
@@ -401,7 +436,9 @@ def _serialize(m: Media) -> dict:
         "date_prise": m.date_prise,
         "annee": m.annee,
         "approved_at": m.approved_at,
+        "uploaded_by": m.uploaded_by,
         "likes": m.likes or 0,
         "reposts": m.reposts or 0,
         "shares": m.shares or 0,
+        "reports": m.reports or 0,
     }

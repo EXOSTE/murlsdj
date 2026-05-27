@@ -126,7 +126,16 @@ export default function Contribute() {
 
           <AnimatePresence mode="wait">
             {state === "success" ? (
-              <SuccessMessage key="success" />
+              <SuccessMessage key="success" onReset={() => {
+                setState("idle");
+                setFile(null);
+                setPreview(null);
+                setLegende("");
+                setAuteur("");
+                setDatePrise("");
+                setRgpdOk(false);
+                setProgress(0);
+              }} />
             ) : (
               <motion.form
                 key="form"
@@ -289,7 +298,7 @@ export default function Contribute() {
   );
 }
 
-function SuccessMessage() {
+function SuccessMessage({ onReset }: { onReset: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -305,7 +314,16 @@ function SuccessMessage() {
       <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
         Votre souvenir a bien été reçu. Il sera publié après validation par notre équipe.
       </p>
-      <Link to="/" className="inline-block mt-2 text-bleu text-sm underline">← Retour au fil</Link>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <button
+          onClick={onReset}
+          className="text-bleu text-sm underline hover:text-encre transition-colors"
+        >
+          Partager un autre souvenir
+        </button>
+        <span className="text-slate-300 hidden sm:inline">·</span>
+        <Link to="/" className="text-slate-400 text-sm hover:text-encre transition-colors">← Retour au fil</Link>
+      </div>
     </motion.div>
   );
 }

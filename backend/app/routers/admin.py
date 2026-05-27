@@ -1,15 +1,18 @@
+import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Body, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.media import Media, MediaStatus
+from app.models.media import Media, MediaStatus, MediaType
 from app.models.settings import Setting
 from app.models.comment import Comment
 from app.services.token_service import verify_admin_secret, get_setting
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -76,6 +79,49 @@ def unpublish_media(media_id: str, db: Session = Depends(get_db), _=Depends(chec
     media.approved_at = None
     db.commit()
     return {"message": "Dépublié"}
+
+
+@router.delete("/delete/{media_id}")
+def delete_media(media_id: str, db: Session = Depends(get_db), _=Depends(check_admin)):
+    media = _get_or_404(db, media_id)
+    if media.file_url and not media.file_url.startswith("text://"):
+        try:
+            import cloudinary.uploader
+            resource_type = "video" if media.type == MediaType.video else "image"
+            parts = media.file_url.split("/upload/")
+            if len(parts) == 2:
+                public_id_part = parts[1]
+                if "/" in public_id_part and public_id_part.split("/")[0].startswith("v") and public_id_part.split("/")[0][1:].isdigit():
+                    public_id_part = public_id_part.split("/", 1)[1]
+                public_id = public_id_part.rsplit(".", 1)[0] if "." in public_id_part else public_id_part
+                cloudinary.uploader.destroy(public_id, resource_type=resource_type)
+        except Exception as e:
+            logger.warning("Échec suppression Cloudinary: %s", e)
+    db.delete(media)
+    db.commit()
+    return {"message": "Supprimé"}
+
+
+@router.post("/bulk-approve")
+def bulk_approve(ids: List[str] = Body(...), db: Session = Depends(get_db), _=Depends(check_admin)):
+    now = datetime.now(timezone.utc)
+    for media_id in ids:
+        media = db.query(Media).filter(Media.id == media_id).first()
+        if media:
+            media.status = MediaStatus.approved
+            media.approved_at = now
+    db.commit()
+    return {"message": f"{len(ids)} éléments approuvés"}
+
+
+@router.post("/bulk-reject")
+def bulk_reject(ids: List[str] = Body(...), db: Session = Depends(get_db), _=Depends(check_admin)):
+    for media_id in ids:
+        media = db.query(Media).filter(Media.id == media_id).first()
+        if media:
+            media.status = MediaStatus.rejected
+    db.commit()
+    return {"message": f"{len(ids)} éléments rejetés"}
 
 
 @router.get("/token")
@@ -165,5 +211,7 @@ def _serialize(m: Media) -> dict:
         "status": m.status,
         "uploaded_at": m.uploaded_at,
         "approved_at": m.approved_at,
+        "uploaded_by": m.uploaded_by,
         "raison_rejet": m.raison_rejet,
+        "reports": m.reports or 0,
     }

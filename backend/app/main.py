@@ -15,6 +15,24 @@ try:
 except Exception as e:
     print(f"Warning: Database initialization failed: {e}")
 
+# Migrations inline pour les colonnes ajoutées après la création initiale
+from sqlalchemy import text
+_new_columns = [
+    ("media", "reposts", "INTEGER NOT NULL DEFAULT 0"),
+    ("media", "shares", "INTEGER NOT NULL DEFAULT 0"),
+    ("media", "reports", "INTEGER NOT NULL DEFAULT 0"),
+]
+try:
+    with engine.connect() as _conn:
+        for _table, _col, _definition in _new_columns:
+            try:
+                _conn.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_col} {_definition}"))
+                _conn.commit()
+            except Exception:
+                pass  # Colonne déjà existante
+except Exception as e:
+    print(f"Warning: Migration failed: {e}")
+
 app = FastAPI(title="Mur LSDJ — Une infinité d'histoires", version="1.0.0")
 
 origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]

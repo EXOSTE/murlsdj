@@ -33,3 +33,4 @@ class Media(Base):
     likes = Column(Integer, nullable=False, default=0, server_default="0")
     reposts = Column(Integer, nullable=False, default=0, server_default="0")
     shares = Column(Integer, nullable=False, default=0, server_default="0")
+    reports = Column(Integer, nullable=False, default=0, server_default="0")
