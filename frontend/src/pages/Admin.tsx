@@ -248,18 +248,28 @@ export default function Admin() {
               const isText = item.file_url?.startsWith("text://");
               return (
               <div key={item.id} className="bg-white rounded-xl border border-blue-100 overflow-hidden flex gap-0">
-                <div className="w-40 h-36 shrink-0 bg-blue-50 overflow-hidden flex items-center justify-center">
+                <div className="w-44 shrink-0 bg-blue-50 overflow-hidden flex items-center justify-center self-stretch">
                   {isText ? (
                     <div className="w-full h-full bg-gradient-to-br from-bleu to-encre flex items-center justify-center p-3">
                       <span className="font-serif text-white/80 text-3xl leading-none">"</span>
                     </div>
+                  ) : item.type === "video" ? (
+                    <video
+                      src={item.file_url}
+                      className="w-full h-full object-contain bg-black"
+                      controls
+                      playsInline
+                      preload="metadata"
+                      style={{ maxHeight: "180px" }}
+                    />
                   ) : (
-                  <img
-                    src={item.thumbnail_url ?? item.file_url}
-                    alt=""
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
+                    <img
+                      src={item.file_url}
+                      alt=""
+                      loading="lazy"
+                      className="w-full h-full object-contain"
+                      style={{ maxHeight: "180px" }}
+                    />
                   )}
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between">

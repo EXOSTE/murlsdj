@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ShareModalProps {
   mediaId: string;
   legende: string | null;
+  fileUrl?: string;
+  thumbnailUrl?: string | null;
+  mediaType?: "photo" | "video";
   onClose: () => void;
 }
 
-export default function ShareModal({ mediaId, legende, onClose }: ShareModalProps) {
+export default function ShareModal({ mediaId, legende, fileUrl, thumbnailUrl, mediaType, onClose }: ShareModalProps) {
   const url = `${window.location.origin}/?media=${mediaId}`;
   const text = legende ? `${legende} — ${url}` : url;
   const [copied, setCopied] = useState(false);
@@ -93,6 +96,29 @@ export default function ShareModal({ mediaId, legende, onClose }: ShareModalProp
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
         >
+          {/* Prévisualisation */}
+          {fileUrl && !fileUrl.startsWith("text://") && (
+            <div className="rounded-xl overflow-hidden bg-black aspect-video mb-1">
+              {mediaType === "video" ? (
+                <video
+                  src={fileUrl}
+                  className="w-full h-full object-contain"
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={thumbnailUrl ?? fileUrl}
+                  alt={legende ?? ""}
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
+          )}
+          {legende && (
+            <p className="text-xs text-slate-500 text-center line-clamp-2 mb-1">{legende}</p>
+          )}
           <h3 className="font-serif text-encre text-center text-base mb-4">Partager ce souvenir</h3>
           <div className="grid grid-cols-2 gap-2">
             {options.map((opt) => (
