@@ -35,6 +35,7 @@ class InMemoryRateLimiter:
 
 
 upload_limiter = InMemoryRateLimiter(requests_limit=5, window_seconds=60)
+like_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=60)
 
 
 def rate_limit_upload(request: Request):
@@ -44,6 +45,12 @@ def rate_limit_upload(request: Request):
             status_code=429,
             detail="Trop de tentatives d'upload. Veuillez patienter une minute."
         )
+
+
+def rate_limit_like(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not like_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="Trop de likes. Veuillez patienter.")
 
 
 router = APIRouter(prefix="/api/media", tags=["media"])
@@ -244,6 +251,24 @@ def get_single_media(media_id: str, db: Session = Depends(get_db)):
     if not m:
         raise HTTPException(status_code=404, detail="Média introuvable ou non approuvé")
     return _serialize(m)
+
+
+@router.post("/{media_id}/like", dependencies=[Depends(rate_limit_like)])
+def like_media(media_id: str, db: Session = Depends(get_db)):
+    from uuid import UUID
+    try:
+        uuid_val = UUID(media_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de média invalide")
+
+    m = db.query(Media).filter(Media.id == uuid_val, Media.status == MediaStatus.approved).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Média introuvable")
+
+    m.likes = (m.likes or 0) + 1
+    db.commit()
+    db.refresh(m)
+    return {"likes": m.likes}
 
 
 def _serialize(m: Media) -> dict:
