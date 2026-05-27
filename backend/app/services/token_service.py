@@ -17,12 +17,6 @@ def get_setting(db: Session, key: str) -> str | None:
     if env_val:
         return env_val
 
-    # 3. Valeurs par défaut historiques
-    if key == "contribution_token":
-        return "b0c08bd5-40e0-4ab3-b04c-112505a67bb1"
-    if key == "admin_secret":
-        return "d2024cbf-2e36-42e5-818d-f232fb950507"
-
     return None
 
 

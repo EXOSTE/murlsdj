@@ -1,3 +1,4 @@
+import logging
 import time
 from collections import defaultdict
 from datetime import date
@@ -11,6 +12,8 @@ from app.models.media import Media, MediaStatus, MediaType
 from app.services.cloudinary_service import upload_file
 from app.services.token_service import verify_contribution_token
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class InMemoryRateLimiter:
@@ -47,6 +50,30 @@ router = APIRouter(prefix="/api/media", tags=["media"])
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"}
+
+
+def _detect_media_type(content: bytes) -> str | None:
+    """Detect MIME type from file magic bytes, ignoring client-supplied Content-Type."""
+    if len(content) < 12:
+        return None
+    if content[:3] == b'\xff\xd8\xff':
+        return "image/jpeg"
+    if content[:8] == b'\x89PNG\r\n\x1a\n':
+        return "image/png"
+    if content[:6] in (b'GIF87a', b'GIF89a'):
+        return "image/gif"
+    if content[:4] == b'RIFF' and content[8:12] == b'WEBP':
+        return "image/webp"
+    if content[:4] == b'\x1a\x45\xdf\xa3':
+        return "video/webm"
+    if content[4:8] == b'ftyp':
+        brand = content[8:12]
+        if brand in (b'qt  ', b'mqt ', b'MSNV'):
+            return "video/quicktime"
+        return "video/mp4"
+    if content[:4] == b'RIFF' and content[8:11] == b'AVI':
+        return "video/x-msvideo"
+    return None
 
 
 @router.post("/upload", dependencies=[Depends(rate_limit_upload)])
@@ -86,9 +113,10 @@ async def upload_media(
             db.refresh(media)
         except Exception as e:
             db.rollback()
+            logger.error("Erreur enregistrement témoignage: %s", e, exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Erreur lors de l'enregistrement du témoignage : {str(e)}"
+                detail="Une erreur interne est survenue. Veuillez réessayer."
             )
         return {"message": "Merci ! Votre témoignage est en attente de validation.", "id": str(media.id)}
 
@@ -97,10 +125,11 @@ async def upload_media(
     if len(content) > max_bytes:
         raise HTTPException(status_code=413, detail=f"Fichier trop lourd (maximum {settings.MAX_UPLOAD_SIZE_MB} Mo)")
 
-    if file.content_type in ALLOWED_IMAGE_TYPES:
+    detected_type = _detect_media_type(content)
+    if detected_type in ALLOWED_IMAGE_TYPES:
         media_type = MediaType.photo
         resource_type = "image"
-    elif file.content_type in ALLOWED_VIDEO_TYPES:
+    elif detected_type in ALLOWED_VIDEO_TYPES:
         media_type = MediaType.video
         resource_type = "video"
     else:
@@ -109,9 +138,10 @@ async def upload_media(
     try:
         uploaded = await upload_file(content, resource_type)
     except Exception as e:
+        logger.error("Erreur upload Cloudinary: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Erreur lors de l'upload cloud (Cloudinary) : {str(e)}. Veuillez verifier les variables d'environnement CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET."
+            detail="Erreur lors de l'envoi du fichier. Veuillez réessayer."
         )
 
     try:
@@ -128,9 +158,10 @@ async def upload_media(
         db.refresh(media)
     except Exception as e:
         db.rollback()
+        logger.error("Erreur enregistrement média en base: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Erreur lors de l'enregistrement en base de données : {str(e)}. Veuillez verifier la variable d'environnement DATABASE_URL."
+            detail="Une erreur interne est survenue. Veuillez réessayer."
         )
 
     return {"message": "Merci ! Votre contribution est en attente de validation.", "id": str(media.id)}

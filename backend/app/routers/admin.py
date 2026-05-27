@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,12 +15,10 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 def check_admin(
-    secret: Optional[str] = Query(None),
     x_admin_secret: Optional[str] = Header(None, alias="X-Admin-Secret"),
     db: Session = Depends(get_db),
 ):
-    admin_secret = x_admin_secret or secret
-    if not admin_secret or not verify_admin_secret(db, admin_secret):
+    if not x_admin_secret or not verify_admin_secret(db, x_admin_secret):
         raise HTTPException(status_code=403, detail="Accès refusé")
 
 

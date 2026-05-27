@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadMedia } from "../lib/api";
@@ -53,8 +53,15 @@ const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 
 };
 
 export default function Contribute() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [token] = useState(() => searchParams.get("token") ?? "");
+
+  useEffect(() => {
+    if (searchParams.has("token")) {
+      setSearchParams({}, { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [tab, setTab] = useState<"media" | "testimony">("media");
   const [file, setFile] = useState<File | null>(null);

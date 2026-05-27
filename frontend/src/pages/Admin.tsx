@@ -18,14 +18,7 @@ type Tab = "pending" | "published" | "comments" | "token";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [secret, setSecret] = useState<string>(() => {
-    const urlSecret = searchParams.get("secret");
-    if (urlSecret) {
-      sessionStorage.setItem("lsdj_admin_secret", urlSecret);
-      return urlSecret;
-    }
-    return sessionStorage.getItem("lsdj_admin_secret") ?? "";
-  });
+  const [secret, setSecret] = useState<string>(() => searchParams.get("secret") ?? "");
 
   const [tab, setTab] = useState<Tab>("pending");
   const [pending, setPending] = useState<MediaItem[]>([]);
@@ -83,7 +76,6 @@ export default function Admin() {
       .then(() => setAccess("ok"))
       .catch((err) => {
         if (err?.response?.status === 403) {
-          sessionStorage.removeItem("lsdj_admin_secret");
           setSecret("");
           setAccess("unauthorized");
         } else {
@@ -147,7 +139,6 @@ export default function Admin() {
     setAccess("loading");
     try {
       await getPendingMedia(inputSecret.trim());
-      sessionStorage.setItem("lsdj_admin_secret", inputSecret.trim());
       setSecret(inputSecret.trim());
       setAccess("ok");
     } catch (err: any) {
@@ -157,7 +148,6 @@ export default function Admin() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("lsdj_admin_secret");
     setSecret("");
     setAccess("unauthorized");
   };
