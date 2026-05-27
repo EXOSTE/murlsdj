@@ -234,6 +234,66 @@ def get_timeline(db: Session = Depends(get_db)):
     return [{"annee": r.annee, "count": r.count} for r in rows]
 
 
+@router.get("/upload-signature")
+def get_upload_signature():
+    import cloudinary.utils, time
+    timestamp = int(time.time())
+    params_to_sign = {"folder": "mur-lsdj", "timestamp": timestamp}
+    signature = cloudinary.utils.api_sign_request(params_to_sign, settings.CLOUDINARY_API_SECRET)
+    return {
+        "signature": signature,
+        "timestamp": timestamp,
+        "api_key": settings.CLOUDINARY_API_KEY,
+        "cloud_name": settings.CLOUDINARY_CLOUD_NAME,
+        "folder": "mur-lsdj",
+    }
+
+
+@router.post("/register", dependencies=[Depends(rate_limit_upload)])
+def register_media(
+    file_url: str = Form(...),
+    public_id: str = Form(...),
+    resource_type: str = Form(...),
+    legende: Optional[str] = Form(None),
+    date_prise: Optional[date] = Form(None),
+    rgpd_ok: bool = Form(...),
+    auteur: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    if not rgpd_ok:
+        raise HTTPException(status_code=400, detail="Vous devez accepter les conditions d'utilisation")
+    if resource_type not in ("image", "video"):
+        raise HTTPException(status_code=400, detail="Type de média invalide")
+
+    cloud = settings.CLOUDINARY_CLOUD_NAME
+    if resource_type == "image":
+        thumbnail_url = f"https://res.cloudinary.com/{cloud}/image/upload/w_600,h_400,c_fill,f_jpg/{public_id}.jpg"
+        media_type = MediaType.photo
+    else:
+        thumbnail_url = f"https://res.cloudinary.com/{cloud}/video/upload/so_0,w_600,h_400,c_fill,f_jpg/{public_id}.jpg"
+        media_type = MediaType.video
+
+    author_name = auteur.strip() if auteur else None
+    try:
+        media = Media(
+            file_url=file_url,
+            thumbnail_url=thumbnail_url,
+            type=media_type,
+            legende=legende.strip() if legende else None,
+            date_prise=date_prise,
+            annee=date_prise.year if date_prise else None,
+            uploaded_by=author_name,
+        )
+        db.add(media)
+        db.commit()
+        db.refresh(media)
+    except Exception as e:
+        db.rollback()
+        logger.error("Erreur enregistrement média: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Une erreur interne est survenue.")
+    return {"message": "Merci ! Votre contribution est en attente de validation.", "id": str(media.id)}
+
+
 @router.get("/popular")
 def get_popular_media(
     page: int = 1,

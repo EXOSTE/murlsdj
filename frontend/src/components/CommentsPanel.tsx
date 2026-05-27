@@ -128,12 +128,12 @@ export default function CommentsPanel({ mediaId, onClose }: CommentsPanelProps) 
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Écrire un commentaire…"
                     maxLength={300}
-                    className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-bleu"
+                    className="flex-1 min-w-0 text-sm border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-bleu"
                   />
                   <button
                     type="submit"
                     disabled={!author.trim() || !content.trim() || submitState === "submitting"}
-                    className="bg-bleu text-white text-sm px-4 rounded-xl disabled:opacity-40"
+                    className="bg-bleu text-white text-sm px-4 py-2 rounded-xl disabled:opacity-40 shrink-0 min-w-[72px]"
                   >
                     {submitState === "submitting" ? "…" : "Envoyer"}
                   </button>

@@ -49,6 +49,26 @@ export const uploadMedia = async (formData: FormData) => {
   return res.data;
 };
 
+export interface UploadSignature {
+  signature: string;
+  timestamp: number;
+  api_key: string;
+  cloud_name: string;
+  folder: string;
+}
+
+export const getUploadSignature = async (): Promise<UploadSignature> => {
+  const res = await api.get("/api/media/upload-signature");
+  return res.data;
+};
+
+export const registerMedia = async (formData: FormData) => {
+  const res = await api.post("/api/media/register", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
 export const getPublicMedia = async (page = 1, annee?: number): Promise<PublicMediaResponse> => {
   const params: Record<string, unknown> = { page, per_page: 24 };
   if (annee) params.annee = annee;

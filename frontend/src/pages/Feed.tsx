@@ -141,39 +141,42 @@ export default function Feed({ popular = false }: FeedProps) {
     <div className="relative w-screen h-dvh bg-black overflow-hidden">
       {/* Header */}
       {!isKiosk && (
-        <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 py-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-          <span className="font-serif text-white text-lg tracking-wide drop-shadow pointer-events-none">
+        <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+          <span className="font-serif text-white text-base tracking-wide drop-shadow pointer-events-none shrink-0">
             Mur LSDJ
           </span>
-          <nav className="flex items-center gap-3 pointer-events-auto">
-            <Link
-              to="/"
-              className={`text-xs uppercase tracking-widest transition-colors ${!popular ? "text-white font-semibold" : "text-white/70 hover:text-white"}`}
-            >
-              Récent
-            </Link>
-            <Link
-              to="/populaire"
-              className={`flex items-center gap-1 text-xs uppercase tracking-widest transition-colors ${popular ? "text-white font-semibold" : "text-white/70 hover:text-white"}`}
-            >
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
-              Populaire
-            </Link>
-            <Link to="/galerie" className="text-white/70 hover:text-white text-xs uppercase tracking-widest transition-colors">
+          <nav className="flex items-center gap-2 pointer-events-auto">
+            {/* Récent / Populaire toggle */}
+            <div className="flex items-center bg-white/10 rounded-full border border-white/20 overflow-hidden">
+              <Link
+                to="/"
+                className={`px-2.5 py-1 text-[10px] uppercase tracking-widest transition-colors ${!popular ? "bg-white/20 text-white font-semibold" : "text-white/70"}`}
+              >
+                Récent
+              </Link>
+              <Link
+                to="/populaire"
+                className={`flex items-center gap-1 px-2.5 py-1 text-[10px] uppercase tracking-widest transition-colors ${popular ? "bg-white/20 text-white font-semibold" : "text-white/70"}`}
+              >
+                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current shrink-0"><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+                <span className="hidden sm:inline">Populaire</span>
+              </Link>
+            </div>
+            <Link to="/galerie" className="hidden sm:block text-white/70 hover:text-white text-[10px] uppercase tracking-widest transition-colors">
               Galerie
             </Link>
             <Link
               to="/contribuer"
-              className="bg-white/15 hover:bg-white/25 text-white text-xs uppercase tracking-widest transition-colors px-3 py-1.5 rounded-full border border-white/20"
+              className="bg-white/15 hover:bg-white/25 text-white text-[10px] uppercase tracking-widest transition-colors px-2.5 py-1.5 rounded-full border border-white/20 shrink-0"
             >
               + Publier
             </Link>
             <button
               onClick={enterKiosk}
-              className="text-white/60 hover:text-white transition-colors"
+              className="text-white/60 hover:text-white transition-colors shrink-0"
               title="Mode kiosque"
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
                 <path d="M5 5h5V3H3v7h2zm5 14H5v-5H3v7h7zm11-5h-2v5h-5v2h7zm-2-9h2V3h-7v2h5z" />
               </svg>
             </button>
