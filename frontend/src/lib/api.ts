@@ -1,7 +1,19 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // En production sur Vercel, on utilise le préfixe de route relatif
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return "/_/backend";
+  }
+  // En local, on appelle le port 8000
+  return "http://localhost:8000";
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: getBaseURL(),
 });
 
 export interface MediaItem {
