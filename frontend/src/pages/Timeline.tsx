@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import MediaCard from "../components/MediaCard";
 import Lightbox from "../components/Lightbox";
+import CinematicShow from "../components/CinematicShow";
 import { getTimeline, getPublicMedia } from "../lib/api";
 import type { MediaItem } from "../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,7 @@ export default function Timeline() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [showCinematic, setShowCinematic] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -135,11 +137,24 @@ export default function Timeline() {
             </div>
           ) : (
             <>
-              <div className="mb-6 flex items-baseline gap-3">
-                <h1 className="font-serif text-4xl text-encre">{selectedYear}</h1>
-                <p className="text-slate-400 text-sm">
-                  {items.length} souvenir{items.length > 1 ? "s" : ""}
-                </p>
+              <div className="mb-6 flex items-baseline justify-between gap-3 flex-wrap">
+                <div className="flex items-baseline gap-3">
+                  <h1 className="font-serif text-4xl text-encre">{selectedYear}</h1>
+                  <p className="text-slate-400 text-sm">
+                    {items.length} souvenir{items.length > 1 ? "s" : ""}
+                  </p>
+                </div>
+                {items.length > 0 && (
+                  <button
+                    onClick={() => setShowCinematic(true)}
+                    className="inline-flex items-center justify-center gap-2 bg-bleu text-white px-4 py-2.5 rounded-xl font-medium text-xs hover:bg-encre hover:shadow-lg hover:shadow-bleu/10 transition-all duration-300"
+                  >
+                    <svg className="w-4 h-4 text-jaune animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Lancer le Diaporama ({selectedYear})
+                  </button>
+                )}
               </div>
 
               <AnimatePresence mode="wait">
@@ -180,6 +195,13 @@ export default function Timeline() {
           onClose={() => setLightboxIndex(null)}
           onPrev={() => setLightboxIndex((i) => Math.max(0, (i ?? 0) - 1))}
           onNext={() => setLightboxIndex((i) => Math.min(items.length - 1, (i ?? 0) + 1))}
+        />
+      )}
+
+      {showCinematic && (
+        <CinematicShow
+          items={items}
+          onClose={() => setShowCinematic(false)}
         />
       )}
     </div>

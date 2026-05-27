@@ -52,10 +52,11 @@ ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo", "video
 @router.post("/upload", dependencies=[Depends(rate_limit_upload)])
 async def upload_media(
     token: str = Form(...),
-    file: UploadFile = File(...),
+    file: Optional[UploadFile] = File(None),
     legende: Optional[str] = Form(None),
     date_prise: Optional[date] = Form(None),
     rgpd_ok: bool = Form(...),
+    auteur: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
     if not rgpd_ok:
@@ -63,6 +64,33 @@ async def upload_media(
 
     if not verify_contribution_token(db, token):
         raise HTTPException(status_code=401, detail="Lien de contribution invalide ou expiré")
+
+    # If no file is supplied, it is a text-only testimony!
+    if not file:
+        if not legende or not legende.strip():
+            raise HTTPException(status_code=400, detail="Le texte du témoignage ne peut pas être vide")
+        
+        author_name = auteur.strip() if auteur else "Anonyme"
+        try:
+            media = Media(
+                file_url=f"text://{author_name}",
+                thumbnail_url=None,
+                type=MediaType.photo,  # Treat as photo for DB type compatibility
+                legende=legende.strip(),
+                date_prise=date_prise,
+                annee=date_prise.year if date_prise else None,
+                uploaded_by=author_name,
+            )
+            db.add(media)
+            db.commit()
+            db.refresh(media)
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de l'enregistrement du témoignage : {str(e)}"
+            )
+        return {"message": "Merci ! Votre témoignage est en attente de validation.", "id": str(media.id)}
 
     content = await file.read()
     max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024

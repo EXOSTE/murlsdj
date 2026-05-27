@@ -13,6 +13,8 @@ interface LightboxProps {
 
 export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext }: LightboxProps) {
   const item = items[currentIndex];
+  const isText = item?.file_url?.startsWith("text://");
+  const authorName = isText ? item.file_url.replace("text://", "") : "";
 
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -191,7 +193,26 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
             onClick={(e) => e.stopPropagation()}
           >
             <AnimatePresence mode="wait">
-              {item.type === "video" ? (
+              {isText ? (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25 }}
+                  className="max-h-[65vh] md:max-h-[75vh] max-w-2xl w-full rounded-2xl bg-gradient-to-br from-bleu/90 to-encre/95 border border-white/10 p-10 md:p-14 shadow-2xl z-10 relative text-center flex flex-col justify-center items-center text-white"
+                >
+                  <div className="absolute top-4 left-4 text-white/5 font-serif text-[280px] leading-none pointer-events-none select-none">
+                    “
+                  </div>
+                  <p className="font-serif text-xl md:text-3xl leading-relaxed text-creme/95 italic relative z-10">
+                    « {item.legende} »
+                  </p>
+                  <div className="h-0.5 w-16 bg-jaune my-8 relative z-10" />
+                  <p className="text-xs text-jaune uppercase tracking-widest font-semibold font-sans mb-1 relative z-10">Auteur du témoignage</p>
+                  <p className="text-base md:text-lg font-serif text-white/90 relative z-10">{authorName || item.uploaded_by || "Anonyme"}</p>
+                </motion.div>
+              ) : item.type === "video" ? (
                 <motion.video
                   key={item.id}
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -218,16 +239,16 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
             </AnimatePresence>
             
             {/* Lueur de fond */}
-            {item.type === "photo" && (
+            {item.type === "photo" && !isText && (
               <div 
                 className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-20 scale-105 pointer-events-none z-0"
                 style={{ backgroundImage: `url(${item.file_url})` }}
               />
             )}
           </div>
-
+ 
           {/* Légende bas de page */}
-          {(item.legende || item.date_prise) && (
+          {!isText && (item.legende || item.date_prise) && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center px-6 max-w-xl z-10">
               {item.legende && (
                 <p className="text-white/90 text-sm md:text-base font-serif leading-relaxed drop-shadow">

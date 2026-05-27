@@ -7,6 +7,49 @@ interface MediaCardProps {
 }
 
 export default function MediaCard({ item, onClick }: MediaCardProps) {
+  const isText = item.file_url?.startsWith("text://");
+  const authorName = isText ? item.file_url.replace("text://", "") : "";
+
+  if (isText) {
+    return (
+      <motion.div
+        layout
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+        }}
+        className="cursor-pointer group relative overflow-hidden rounded-2xl bg-gradient-to-br from-bleu to-encre p-7 break-inside-avoid mb-4 shadow-md hover:shadow-xl hover:shadow-bleu/15 hover:ring-2 hover:ring-jaune transition-all duration-300 min-h-[200px] flex flex-col justify-between text-white"
+        onClick={onClick}
+      >
+        {/* Translucent decorative quotation mark in background */}
+        <div className="absolute -top-4 -right-2 text-white/10 font-serif text-[160px] leading-none pointer-events-none select-none">
+          ”
+        </div>
+        
+        {/* Testimony text */}
+        <div className="relative z-10">
+          <p className="font-serif text-base md:text-lg leading-relaxed text-creme/95 group-hover:text-white transition-colors italic">
+            « {item.legende} »
+          </p>
+        </div>
+
+        {/* Author information & view link */}
+        <div className="relative z-10 mt-6 flex items-end justify-between border-t border-white/10 pt-4">
+          <div>
+            <p className="text-[9px] text-jaune uppercase tracking-widest font-semibold font-sans mb-0.5">Témoignage</p>
+            <p className="text-xs font-semibold font-sans text-white/90">{authorName || item.uploaded_by || "Anonyme"}</p>
+          </div>
+          <span className="text-[10px] text-jaune/80 group-hover:text-jaune font-semibold uppercase flex items-center gap-1 transition-colors">
+            Voir
+            <svg className="w-3 h-3 transition-transform group-hover:translate-x-1 duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </span>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       layout

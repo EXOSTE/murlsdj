@@ -56,9 +56,11 @@ export default function Contribute() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
+  const [tab, setTab] = useState<"media" | "testimony">("media");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [legende, setLegende] = useState("");
+  const [auteur, setAuteur] = useState("");
   const [datePrise, setDatePrise] = useState("");
   const [rgpdOk, setRgpdOk] = useState(false);
   const [state, setState] = useState<UploadState>("idle");
@@ -76,25 +78,34 @@ export default function Contribute() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !rgpdOk) return;
+    if (tab === "media" && !file) return;
+    if (tab === "testimony" && !legende.trim()) return;
+    if (!rgpdOk) return;
 
     setState("uploading");
-
-    let fileToSend: File | Blob = file;
-    if (file.type.startsWith("image/")) {
-      try {
-        fileToSend = await compressImage(file);
-      } catch (err) {
-        console.warn("Client-side compression failed, uploading original:", err);
-      }
-    }
+    setErrorMsg("");
 
     const formData = new FormData();
     formData.append("token", token);
-    formData.append("file", fileToSend, file.name);
     formData.append("rgpd_ok", "true");
-    if (legende.trim()) formData.append("legende", legende.trim());
     if (datePrise) formData.append("date_prise", datePrise);
+    if (auteur.trim()) formData.append("auteur", auteur.trim());
+
+    if (tab === "media" && file) {
+      let fileToSend: File | Blob = file;
+      if (file.type.startsWith("image/")) {
+        try {
+          fileToSend = await compressImage(file);
+        } catch (err) {
+          console.warn("Client-side compression failed, uploading original:", err);
+        }
+      }
+      formData.append("file", fileToSend, file.name);
+      if (legende.trim()) formData.append("legende", legende.trim());
+    } else {
+      // Written testimony
+      formData.append("legende", legende.trim());
+    }
 
     try {
       await uploadMedia(formData);
@@ -143,49 +154,91 @@ export default function Contribute() {
                 onSubmit={handleSubmit}
                 className="bg-white rounded-2xl shadow-sm border border-blue-100 p-8 space-y-6"
               >
-                {/* Zone upload */}
-                <div>
-                  <label className="block text-sm font-medium text-encre mb-2">
-                    Photo ou vidéo <span className="text-red-500">*</span>
-                  </label>
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-blue-100 rounded-xl p-6 text-center cursor-pointer hover:border-bleu transition-colors"
+                {/* Sélecteur d'onglets */}
+                <div className="flex gap-1 bg-creme p-1 rounded-xl border border-blue-50/50">
+                  <button
+                    type="button"
+                    onClick={() => { setTab("media"); setErrorMsg(""); }}
+                    className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors ${
+                      tab === "media" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
+                    }`}
                   >
-                    {preview ? (
-                      file?.type.startsWith("video") ? (
-                        <video src={preview} className="mx-auto max-h-48 rounded-lg" controls />
-                      ) : (
-                        <img src={preview} alt="aperçu" className="mx-auto max-h-48 rounded-lg object-cover" />
-                      )
-                    ) : (
-                      <div className="space-y-2 text-slate-400">
-                        <svg className="mx-auto w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
-                        </svg>
-                        <p className="text-sm">Cliquez pour sélectionner un fichier</p>
-                        <p className="text-xs">JPG, PNG, WebP, MP4, MOV — max 50 Mo</p>
-                      </div>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </div>
+                    Photo ou Vidéo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setTab("testimony"); setErrorMsg(""); }}
+                    className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-colors ${
+                      tab === "testimony" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
+                    }`}
+                  >
+                    Témoignage écrit
+                  </button>
                 </div>
 
-                {/* Légende */}
+                {/* Nom de l'auteur (commun) */}
                 <div>
-                  <label className="block text-sm font-medium text-encre mb-2">Légende</label>
+                  <label className="block text-sm font-medium text-encre mb-2">
+                    Votre nom / Prénom <span className="text-slate-400 font-normal">(optionnel)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={auteur}
+                    onChange={(e) => setAuteur(e.target.value)}
+                    placeholder="Ex: Famille Cohen, Éducateur Rachid..."
+                    maxLength={100}
+                    className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm text-encre placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-bleu"
+                  />
+                </div>
+
+                {/* Zone upload (uniquement pour l'onglet média) */}
+                {tab === "media" && (
+                  <div>
+                    <label className="block text-sm font-medium text-encre mb-2">
+                      Photo ou vidéo <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-blue-100 rounded-xl p-6 text-center cursor-pointer hover:border-bleu transition-colors"
+                    >
+                      {preview ? (
+                        file?.type.startsWith("video") ? (
+                          <video src={preview} className="mx-auto max-h-48 rounded-lg" controls />
+                        ) : (
+                          <img src={preview} alt="aperçu" className="mx-auto max-h-48 rounded-lg object-cover" />
+                        )
+                      ) : (
+                        <div className="space-y-2 text-slate-400">
+                          <svg className="mx-auto w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
+                          </svg>
+                          <p className="text-sm">Cliquez pour sélectionner un fichier</p>
+                          <p className="text-xs">JPG, PNG, WebP, MP4, MOV — max 50 Mo</p>
+                        </div>
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Texte / Légende */}
+                <div>
+                  <label className="block text-sm font-medium text-encre mb-2">
+                    {tab === "media" ? "Légende" : "Votre Témoignage"} <span className="text-red-500">{tab === "testimony" && "*"}</span>
+                  </label>
                   <textarea
                     value={legende}
                     onChange={(e) => setLegende(e.target.value)}
-                    placeholder="Décrivez ce souvenir, le lieu, les personnes…"
-                    rows={3}
+                    placeholder={tab === "media" ? "Décrivez ce souvenir, le lieu, les personnes…" : "Racontez une anecdote, écrivez un mot gentil pour l'association..."}
+                    rows={4}
                     maxLength={500}
+                    required={tab === "testimony"}
                     className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm text-encre placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-bleu resize-none"
                   />
                   <p className="text-right text-xs text-slate-400 mt-1">{legende.length}/500</p>
@@ -226,10 +279,10 @@ export default function Contribute() {
 
                 <button
                   type="submit"
-                  disabled={!file || !rgpdOk || state === "uploading"}
+                  disabled={(tab === "media" && !file) || (tab === "testimony" && !legende.trim()) || !rgpdOk || state === "uploading"}
                   className="w-full bg-bleu text-white py-3 rounded-xl font-medium tracking-wide hover:bg-encre transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {state === "uploading" ? "Envoi en cours…" : "Partager ce souvenir"}
+                  {state === "uploading" ? "Envoi en cours…" : tab === "media" ? "Partager ce souvenir" : "Envoyer mon témoignage"}
                 </button>
               </motion.form>
             )}
