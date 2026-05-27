@@ -254,7 +254,7 @@ export default function Contribute() {
                     type="date"
                     value={datePrise}
                     onChange={(e) => setDatePrise(e.target.value)}
-                    min="1994-01-01"
+                    min="1996-01-01"
                     max={new Date().toISOString().split("T")[0]}
                     className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm text-encre focus:outline-none focus:ring-2 focus:ring-bleu"
                   />
