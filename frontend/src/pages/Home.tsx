@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion, animate, useMotionValue, useTransform } from "framer-motion";
+import { motion, animate, useMotionValue } from "framer-motion";
 import Intro from "../components/Intro";
 import { getStats } from "../lib/api";
 import type { AppStats } from "../lib/api";
@@ -9,7 +9,6 @@ const INTRO_PLAYED_KEY = "lsdj_intro_played";
 
 function AnimatedCounter({ from, to, duration = 2, delay = 0 }: { from: number; to: number; duration?: number; delay?: number }) {
   const count = useMotionValue(from);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
   const [displayValue, setDisplayValue] = useState(from);
 
   useEffect(() => {
