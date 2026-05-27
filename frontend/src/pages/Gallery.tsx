@@ -115,7 +115,7 @@ export default function Gallery() {
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl text-encre mb-2">Galerie</h1>
-            <p className="text-slate-400 text-sm">Souvenirs sans date · intemporels</p>
+            <p className="text-slate-400 text-sm">Une infinité d'histoires et de moments partagés</p>
           </div>
           {filteredItems.length > 0 && (
             <button

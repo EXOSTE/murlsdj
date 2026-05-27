@@ -119,9 +119,6 @@ def get_public_media(
 
     if annee:
         query = query.filter(Media.annee == annee)
-    else:
-        # Galerie infinie = médias sans année
-        query = query.filter(Media.annee.is_(None))
 
     total = query.count()
     items = (
