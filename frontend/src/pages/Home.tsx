@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, animate, useMotionValue } from "framer-motion";
 import Intro from "../components/Intro";
-import { getStats } from "../lib/api";
-import type { AppStats } from "../lib/api";
+import MediaCard from "../components/MediaCard";
+import Lightbox from "../components/Lightbox";
+import { getStats, getPublicMedia } from "../lib/api";
+import type { AppStats, MediaItem } from "../lib/api";
 
 const INTRO_PLAYED_KEY = "lsdj_intro_played";
 
@@ -103,10 +105,17 @@ export default function Home() {
     total_comments: 0,
   });
 
+  const [recentItems, setRecentItems] = useState<MediaItem[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   useEffect(() => {
     getStats()
       .then((data) => setStats(data))
       .catch((err) => console.error("Erreur lors du chargement des statistiques", err));
+
+    getPublicMedia(1)
+      .then((res) => setRecentItems(res.items.slice(0, 4)))
+      .catch((err) => console.error("Erreur lors du chargement des photos récentes", err));
   }, []);
 
   const handleIntroComplete = () => {
@@ -127,7 +136,7 @@ export default function Home() {
         <div className="h-1.5 bg-gradient-to-r from-bleu via-jaune to-bleu w-full absolute top-0 left-0 z-20" />
 
         {/* Hero */}
-        <section className="flex flex-col items-center justify-center min-h-screen text-center px-6 relative z-10">
+        <section className="flex flex-col items-center justify-center min-h-[65vh] md:min-h-[70vh] text-center px-6 pt-16 pb-12 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: showIntro ? 0 : 1, y: showIntro ? 24 : 0 }}
@@ -137,7 +146,7 @@ export default function Home() {
             <p className="text-bleu text-xs tracking-[0.25em] uppercase font-sans font-semibold">
               Le Silence des Justes
             </p>
-            <h1 className="font-serif text-5xl md:text-8xl leading-tight text-encre">
+            <h1 className="font-serif text-5xl md:text-7xl leading-tight text-encre">
               Une infinité<br />d'histoires
             </h1>
             <div className="flex items-center justify-center gap-4">
@@ -148,24 +157,6 @@ export default function Home() {
             <p className="text-slate-500 text-sm md:text-base max-w-lg mx-auto leading-relaxed font-sans">
               Trois décennies de souvenirs collectifs et de sourires partagés par les familles, les professionnels et les personnes accompagnées au sein de notre association.
             </p>
-          </motion.div>
-
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: showIntro ? 0 : 1 }}
-            transition={{ delay: 1.2 }}
-            className="absolute bottom-10 flex flex-col items-center gap-2 text-slate-400"
-          >
-            <span className="text-[10px] tracking-[0.3em] uppercase font-medium">Explorer</span>
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-            >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </motion.div>
           </motion.div>
         </section>
 
@@ -260,15 +251,64 @@ export default function Home() {
           </TiltCard>
         </motion.section>
 
+        {/* Aperçu des photos récentes */}
+        {recentItems.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="max-w-5xl mx-auto px-6 pb-24 relative z-10 text-center space-y-10"
+          >
+            <div className="space-y-2">
+              <p className="text-bleu text-xs tracking-widest uppercase font-semibold">Instants partagés</p>
+              <h2 className="font-serif text-3xl text-encre">Récemment ajoutés sur le mur</h2>
+              <div className="h-0.5 w-12 bg-jaune mx-auto mt-3" />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+              {recentItems.map((item, idx) => (
+                <MediaCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => setLightboxIndex(idx)}
+                />
+              ))}
+            </div>
+
+            <div className="pt-4">
+              <Link
+                to="/galerie"
+                className="inline-flex items-center gap-2 border border-bleu/30 text-bleu hover:bg-bleu hover:text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 shadow-sm"
+              >
+                Explorer toute la galerie
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            </div>
+          </motion.section>
+        )}
+
         {/* Footer */}
         <footer className="text-center py-10 border-t border-blue-100/55 relative z-10">
           <div className="flex items-center justify-center gap-3 text-slate-400">
             <div className="h-px w-8 bg-jaune" />
-            <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-bleu/80">Le Silence des Justes · 1996 – 2026</span>
+            <span className="text-[10px] tracking-[0.25em] uppercase font-semibold text-bleu/80">Le Silence des Justes · 1994 – 2024</span>
             <div className="h-px w-8 bg-jaune" />
           </div>
         </footer>
       </div>
+
+      {lightboxIndex !== null && (
+        <Lightbox
+          items={recentItems}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onPrev={() => setLightboxIndex((i) => Math.max(0, (i ?? 0) - 1))}
+          onNext={() => setLightboxIndex((i) => Math.min(recentItems.length - 1, (i ?? 0) + 1))}
+        />
+      )}
     </>
   );
 }
