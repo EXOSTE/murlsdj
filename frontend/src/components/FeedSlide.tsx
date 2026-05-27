@@ -138,7 +138,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
 
       {/* Infos bas-gauche */}
       {!isKiosk && (
-        <div className="absolute bottom-6 left-4 right-20 space-y-1 z-10">
+        <div className="absolute bottom-20 sm:bottom-6 left-4 right-20 space-y-1 z-10">
           {authorName && (
             <p className="text-white font-semibold text-sm drop-shadow">{authorName}</p>
           )}
@@ -153,7 +153,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
 
       {/* Boutons bas-droit */}
       {!isKiosk && (
-        <div className="absolute bottom-6 right-3 flex flex-col items-center gap-5 z-10">
+        <div className="absolute bottom-20 sm:bottom-6 right-3 flex flex-col items-center gap-5 z-10">
           {/* Like */}
           <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
             <div className="relative w-8 h-8">
