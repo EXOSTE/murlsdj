@@ -247,6 +247,36 @@ export default function Home() {
               </div>
             </TiltCard>
           </motion.div>
+
+          {/* Troisième card : Notre Histoire */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: showIntro ? 0 : 1, y: showIntro ? 15 : 0 }}
+            transition={{ duration: 0.8, delay: 0.75 }}
+            className="w-full"
+          >
+            <TiltCard
+              to="/histoire"
+              className="group relative bg-jaune/10 backdrop-blur-md border border-jaune/30 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-4 hover:bg-jaune/20 hover:border-jaune/50 transition-all duration-300"
+            >
+              <div className="w-9 h-9 bg-jaune/20 rounded-full flex items-center justify-center border border-jaune/30 shrink-0 group-hover:border-jaune/60 transition-colors">
+                <svg className="w-4 h-4 text-encre" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.966 8.966 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <div className="space-y-1 text-center md:text-left">
+                <p className="text-encre text-[10px] tracking-wider uppercase font-semibold">1996 – 2026</p>
+                <h2 className="font-serif text-lg md:text-xl text-encre group-hover:text-bleu transition-colors">Notre Histoire</h2>
+                <p className="text-slate-500 text-xs md:text-sm leading-relaxed">Retracez 30 ans d'engagement, d'événements fondateurs et de moments clés qui ont construit l'identité de l'association.</p>
+                <span className="inline-flex items-center gap-1.5 mt-1 text-bleu text-xs font-semibold group-hover:gap-3 transition-all duration-300">
+                  Lire notre histoire
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </TiltCard>
+          </motion.div>
         </div>
 
         {/* Aperçu des photos récentes */}

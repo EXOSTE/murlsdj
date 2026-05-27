@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import MasonryGrid from "../components/MasonryGrid";
 import Lightbox from "../components/Lightbox";
 import CinematicShow from "../components/CinematicShow";
-import { getPublicMedia } from "../lib/api";
+import { getPublicMedia, getTimeline } from "../lib/api";
 import type { MediaItem } from "../lib/api";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -17,24 +17,38 @@ export default function Gallery() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "photo" | "video">("all");
+  const [filterYear, setFilterYear] = useState<number | null>(null);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   const loadMore = useCallback(async () => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
     try {
-      const res = await getPublicMedia(page);
+      const res = await getPublicMedia(page, filterYear ?? undefined);
       setItems((prev) => [...prev, ...res.items]);
       setHasMore(res.has_more);
       setPage((p) => p + 1);
     } finally {
       setIsLoading(false);
     }
-  }, [page, isLoading, hasMore]);
+  }, [page, isLoading, hasMore, filterYear]);
 
   useEffect(() => {
     loadMore();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load available years for filter
+  useEffect(() => {
+    getTimeline().then((data) => setAvailableYears(data.map((d) => d.annee)));
+  }, []);
+
+  // Reset gallery when year filter changes
+  useEffect(() => {
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
+  }, [filterYear]);
 
   const filteredItems = items.filter((item) => {
     const matchesSearch = item.legende
@@ -107,6 +121,9 @@ export default function Gallery() {
             <Link to="/galerie" className="text-bleu font-medium">
               Galerie
             </Link>
+            <Link to="/histoire" className="hover:text-bleu transition-colors">
+              Notre histoire
+            </Link>
           </nav>
         </div>
       </header>
@@ -131,48 +148,76 @@ export default function Gallery() {
         </div>
 
         {/* Filtres & Recherche */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-white border border-blue-50 p-4 rounded-2xl shadow-sm">
-          {/* Recherche */}
-          <div className="relative flex-1">
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Rechercher un souvenir (ex: sortie, anniversaire...)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-creme border border-blue-50/50 rounded-xl pl-10 pr-4 py-2.5 text-xs text-encre placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-bleu"
-            />
+        <div className="mb-6 flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center bg-white border border-blue-50 p-4 rounded-2xl shadow-sm">
+            {/* Recherche */}
+            <div className="relative flex-1">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Rechercher un souvenir (ex: sortie, anniversaire...)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-creme border border-blue-50/50 rounded-xl pl-10 pr-4 py-2.5 text-xs text-encre placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-bleu"
+              />
+            </div>
+
+            {/* Filtre Type */}
+            <div className="flex gap-1 bg-creme p-1 rounded-xl border border-blue-50/50 self-start md:self-auto">
+              <button
+                onClick={() => setFilterType("all")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  filterType === "all" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
+                }`}
+              >
+                Tout
+              </button>
+              <button
+                onClick={() => setFilterType("photo")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  filterType === "photo" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
+                }`}
+              >
+                Photos
+              </button>
+              <button
+                onClick={() => setFilterType("video")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  filterType === "video" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
+                }`}
+              >
+                Vidéos
+              </button>
+            </div>
           </div>
 
-          {/* Filtre Type */}
-          <div className="flex gap-1 bg-creme p-1 rounded-xl border border-blue-50/50 self-start md:self-auto">
-            <button
-              onClick={() => setFilterType("all")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                filterType === "all" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
-              }`}
-            >
-              Tout
-            </button>
-            <button
-              onClick={() => setFilterType("photo")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                filterType === "photo" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
-              }`}
-            >
-              Photos
-            </button>
-            <button
-              onClick={() => setFilterType("video")}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                filterType === "video" ? "bg-bleu text-white shadow-sm" : "text-slate-500 hover:text-bleu"
-              }`}
-            >
-              Vidéos
-            </button>
-          </div>
+          {/* Filtre par Année */}
+          {availableYears.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider shrink-0">Année :</span>
+              <button
+                onClick={() => setFilterYear(null)}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+                  filterYear === null ? "bg-bleu text-white border-bleu" : "text-slate-500 border-blue-100 hover:border-bleu hover:text-bleu"
+                }`}
+              >
+                Toutes
+              </button>
+              {availableYears.map((y) => (
+                <button
+                  key={y}
+                  onClick={() => setFilterYear(filterYear === y ? null : y)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors border ${
+                    filterYear === y ? "bg-bleu text-white border-bleu" : "text-slate-500 border-blue-100 hover:border-bleu hover:text-bleu"
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {items.length === 0 && isLoading ? (

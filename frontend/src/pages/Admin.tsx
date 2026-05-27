@@ -254,20 +254,29 @@ export default function Admin() {
             {pending.length === 0 && (
               <p className="text-slate-400 text-center py-16">Aucune contribution en attente.</p>
             )}
-            {pending.map((item) => (
+            {pending.map((item) => {
+              const isText = item.file_url?.startsWith("text://");
+              return (
               <div key={item.id} className="bg-white rounded-xl border border-blue-100 overflow-hidden flex gap-0">
-                <div className="w-40 h-36 shrink-0 bg-blue-50 overflow-hidden">
+                <div className="w-40 h-36 shrink-0 bg-blue-50 overflow-hidden flex items-center justify-center">
+                  {isText ? (
+                    <div className="w-full h-full bg-gradient-to-br from-bleu to-encre flex items-center justify-center p-3">
+                      <span className="font-serif text-white/80 text-3xl leading-none">"</span>
+                    </div>
+                  ) : (
                   <img
                     src={item.thumbnail_url ?? item.file_url}
                     alt=""
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
+                  )}
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === "video" ? "bg-blue-50 text-blue-600" : "bg-blue-50 text-slate-500"}`}>
-                        {item.type}
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${isText ? "bg-indigo-50 text-indigo-600" : item.type === "video" ? "bg-blue-50 text-blue-600" : "bg-blue-50 text-slate-500"}`}>
+                        {isText ? "témoignage" : item.type}
                       </span>
                       {item.date_prise && (
                         <span className="text-xs text-slate-400">
@@ -276,6 +285,11 @@ export default function Admin() {
                       )}
                     </div>
                     <p className="text-sm text-slate-600 line-clamp-2">{item.legende ?? <em className="text-slate-400">Sans légende</em>}</p>
+                    {(item.uploaded_by || isText) && (
+                      <p className="text-xs text-bleu/60 mt-0.5 font-medium">
+                        {isText ? item.file_url.replace("text://", "") : item.uploaded_by}
+                      </p>
+                    )}
                     <p className="text-xs text-blue-200 mt-1">
                       Reçu {new Date(item.uploaded_at ?? "").toLocaleDateString("fr-FR")}
                     </p>
@@ -323,7 +337,8 @@ export default function Admin() {
                   )}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 
@@ -333,13 +348,22 @@ export default function Admin() {
             {published.length === 0 && (
               <p className="text-slate-400 text-center py-16 col-span-full">Aucun média publié.</p>
             )}
-            {published.map((item) => (
+            {published.map((item) => {
+              const isTextPub = item.file_url?.startsWith("text://");
+              return (
               <div key={item.id} className="relative group rounded-xl overflow-hidden bg-blue-50 aspect-square">
+                {isTextPub ? (
+                  <div className="w-full h-full bg-gradient-to-br from-bleu to-encre flex items-center justify-center p-4">
+                    <p className="font-serif text-white/90 text-xs text-center line-clamp-4 italic">« {item.legende} »</p>
+                  </div>
+                ) : (
                 <img
                   src={item.thumbnail_url ?? item.file_url}
                   alt=""
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
+                )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <button
                     onClick={() => handleUnpublish(item.id)}
@@ -353,8 +377,14 @@ export default function Admin() {
                     {item.annee}
                   </span>
                 )}
+                {isTextPub && (
+                  <span className="absolute top-2 right-2 text-[10px] bg-indigo-600/80 text-white px-1.5 py-0.5 rounded-full">
+                    texte
+                  </span>
+                )}
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 

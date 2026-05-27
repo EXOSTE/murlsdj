@@ -102,6 +102,9 @@ export default function Timeline() {
           <Link to="/galerie" className="hover:text-bleu transition-colors">
             Galerie
           </Link>
+          <Link to="/histoire" className="hover:text-bleu transition-colors">
+            Notre histoire
+          </Link>
         </nav>
       </header>
 

@@ -4,6 +4,8 @@ import Contribute from "./pages/Contribute";
 import Gallery from "./pages/Gallery";
 import Timeline from "./pages/Timeline";
 import Admin from "./pages/Admin";
+import About from "./pages/About";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
@@ -14,7 +16,10 @@ export default function App() {
         <Route path="/galerie" element={<Gallery />} />
         <Route path="/timeline" element={<Timeline />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/histoire" element={<About />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
