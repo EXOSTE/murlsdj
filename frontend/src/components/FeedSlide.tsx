@@ -188,10 +188,10 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
             <span className="text-white text-xs font-medium drop-shadow">{repostsCount}</span>
           </button>
 
-          {/* Partage (flèche TikTok) */}
+          {/* Partage (flèche courbée) */}
           <button onClick={handleOpenShare} className="flex flex-col items-center gap-1 group">
             <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
-              <path d="M13.12 2.06 7.58 7.6c-.38.38-.11 1.02.42 1.02H11v8c0 .55.45 1 1 1s1-.45 1-1V8.62h3c.53 0 .8-.64.42-1.02L13.88 2.06a.54.54 0 0 0-.76 0zM21 15l-.01 3c0 1.1-.89 2-1.99 2H5c-1.1 0-2-.9-2-2v-3c0-.55.45-1 1-1s1 .45 1 1v3h14v-3c0-.55.45-1 1-1s1 .45 1 1z" />
+              <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z" />
             </svg>
           </button>
         </div>
