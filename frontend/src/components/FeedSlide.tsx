@@ -11,6 +11,19 @@ interface FeedSlideProps {
   isKiosk: boolean;
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `il y a ${days} j`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `il y a ${months} mois`;
+  return `il y a ${Math.floor(months / 12)} an${Math.floor(months / 12) > 1 ? "s" : ""}`;
+}
+
 function getLikedKey(id: string) { return `lsdj_liked_${id}`; }
 function getRepostedKey(id: string) { return `lsdj_reposted_${id}`; }
 
@@ -122,10 +135,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           {item.legende && !isText && (
             <p className="text-white/80 text-sm leading-snug line-clamp-3 drop-shadow">{item.legende}</p>
           )}
-          {item.date_prise && (
-            <p className="text-white/50 text-xs">
-              {new Date(item.date_prise).toLocaleDateString("fr-FR", { year: "numeric", month: "long" })}
-            </p>
+          {item.approved_at && (
+            <p className="text-white/50 text-xs">{timeAgo(item.approved_at)}</p>
           )}
         </div>
       )}
