@@ -19,6 +19,8 @@ export default function Feed({ popular = false }: FeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const kioskTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const loadingRef = useRef(false);
+  const wheelCooldown = useRef(false);
+  const activeIndexRef = useRef(0);
   const initialMediaId = popular ? null : searchParams.get("media");
 
   const loadPage = useCallback(async (p: number) => {
@@ -76,12 +78,39 @@ export default function Feed({ popular = false }: FeedProps) {
     return () => observer.disconnect();
   }, [items.length]);
 
+  // Garde activeIndexRef synchronisé pour la molette
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
   // Charger plus quand il reste 3 slides
   useEffect(() => {
     if (hasMore && !loadingRef.current && activeIndex >= items.length - 3 && items.length > 0) {
       loadPage(page + 1);
     }
   }, [activeIndex, items.length, hasMore, page, loadPage]);
+
+  // Molette desktop : avancer d'un slide à la fois
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (wheelCooldown.current) return;
+
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(activeIndexRef.current + direction, container.children.length - 1));
+      const slide = container.children[next] as HTMLElement;
+      slide?.scrollIntoView({ behavior: "smooth" });
+
+      wheelCooldown.current = true;
+      setTimeout(() => { wheelCooldown.current = false; }, 700);
+    };
+
+    container.addEventListener("wheel", onWheel, { passive: false });
+    return () => container.removeEventListener("wheel", onWheel);
+  }, []);
 
   // Mode kiosque
   const enterKiosk = async () => {
