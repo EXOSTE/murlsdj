@@ -192,13 +192,17 @@ export default function Feed({ popular = false }: FeedProps) {
       <div
         ref={containerRef}
         className="w-full h-full overflow-y-scroll"
-        style={{ scrollSnapType: "y mandatory" }}
+        style={{
+          scrollSnapType: "y mandatory",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch" as never,
+        }}
       >
         {items.map((item, idx) => (
           <div
             key={item.id}
             className="w-full h-dvh flex-shrink-0"
-            style={{ scrollSnapAlign: "start" }}
+            style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
           >
             <FeedSlide item={item} isActive={idx === activeIndex} isKiosk={isKiosk} />
           </div>

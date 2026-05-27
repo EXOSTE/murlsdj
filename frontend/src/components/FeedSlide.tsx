@@ -117,7 +117,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
         <video
           ref={videoRef}
           src={item.file_url}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain"
           muted
           loop
           playsInline
@@ -126,7 +126,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
         <img
           src={item.file_url}
           alt={item.legende ?? ""}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain"
           loading="lazy"
         />
       )}
