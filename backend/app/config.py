@@ -21,3 +21,14 @@ if settings.DATABASE_URL.startswith("postgres://"):
 elif settings.DATABASE_URL.startswith("postgresql://"):
     settings.DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
+# Remove sslmode query parameter as it causes a crash with the pg8000 driver connect() method
+if "postgresql+pg8000" in settings.DATABASE_URL:
+    import urllib.parse
+    parsed = urllib.parse.urlparse(settings.DATABASE_URL)
+    query_params = urllib.parse.parse_qs(parsed.query)
+    query_params.pop("sslmode", None)  # Remove sslmode query param
+    new_query = urllib.parse.urlencode(query_params, doseq=True)
+    parsed = parsed._replace(query=new_query)
+    settings.DATABASE_URL = urllib.parse.urlunparse(parsed)
+
+
