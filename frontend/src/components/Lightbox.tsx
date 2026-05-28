@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem, CommentItem } from "../lib/api";
-import { getComments, createComment } from "../lib/api";
+import { getComments, createComment, downloadMedia } from "../lib/api";
 
 interface LightboxProps {
   items: MediaItem[];
@@ -24,6 +24,7 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [submitError, setSubmitError] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const handleShare = () => {
     if (!item) return;
@@ -31,6 +32,14 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
     navigator.clipboard.writeText(url);
     setShareCopied(true);
     setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  const handleDownload = async () => {
+    if (!item || isText || downloading) return;
+    setDownloading(true);
+    const filename = item.legende ? item.legende.slice(0, 40).replace(/[^a-zA-Z0-9]/g, "_") : `souvenir_${item.id.slice(0, 8)}`;
+    await downloadMedia(item.file_url, filename);
+    setDownloading(false);
   };
 
   const handleKey = useCallback(
@@ -173,6 +182,22 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
                 </>
               )}
             </button>
+            {!isText && (
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="flex items-center gap-2 text-xs uppercase tracking-wider font-semibold py-2.5 px-4 rounded-xl border transition-all duration-300 bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-40"
+              >
+                {downloading ? (
+                  <div className="w-4 h-4 border border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                )}
+                {downloading ? "…" : "Télécharger"}
+              </button>
+            )}
             <button
               className="text-white/60 hover:text-white text-3xl leading-none font-light bg-white/5 rounded-full w-9 h-9 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors"
               onClick={onClose}

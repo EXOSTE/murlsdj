@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem } from "../lib/api";
-import { likeMedia, repostMedia, shareMedia, reportMedia } from "../lib/api";
+import { likeMedia, repostMedia, shareMedia, reportMedia, downloadMedia } from "../lib/api";
 import CommentsPanel from "./CommentsPanel";
 import ShareModal from "./ShareModal";
 
@@ -51,6 +51,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
   const [showShare, setShowShare] = useState(false);
   const [reported, setReported] = useState(false);
   const reportPending = useRef(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -133,6 +134,14 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
     } finally {
       reportPending.current = false;
     }
+  };
+
+  const handleDownload = async () => {
+    if (isText || downloading) return;
+    setDownloading(true);
+    const filename = item.legende ? item.legende.slice(0, 40).replace(/[^a-zA-Z0-9]/g, "_") : `souvenir_${item.id.slice(0, 8)}`;
+    await downloadMedia(item.file_url, filename);
+    setDownloading(false);
   };
 
   return (
@@ -264,6 +273,19 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
               <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z" />
             </svg>
           </button>
+
+          {/* Télécharger */}
+          {!isText && (
+            <button onClick={handleDownload} className="flex flex-col items-center gap-1 group" title="Télécharger">
+              {downloading ? (
+                <div className="w-6 h-6 border border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white/40 group-hover:fill-white drop-shadow transition-colors">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/>
+                </svg>
+              )}
+            </button>
+          )}
 
           {/* Signaler */}
           <button onClick={handleReport} className="flex flex-col items-center gap-1 group" title="Signaler ce contenu">

@@ -12,6 +12,7 @@ export default function CinematicShow({ items, onClose }: CinematicShowProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [audioAvailable, setAudioAvailable] = useState(true);
   const activeItem = items[index];
 
   useEffect(() => {
@@ -163,30 +164,34 @@ export default function CinematicShow({ items, onClose }: CinematicShowProps) {
 
         {/* Contrôle Musique */}
         <div className="mt-4">
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/10 transition-colors"
-            title={isMuted ? "Activer la musique d'ambiance" : "Couper la musique d'ambiance"}
-          >
-            {isMuted ? (
-              <>
-                <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.5 9H1.5v6h3l4.5 3.75V5.25z" />
-                </svg>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Musique désactivée</span>
-              </>
-            ) : (
-              <>
-                <div className="flex items-end gap-[2px] h-3 w-4">
-                  <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.8s" }} />
-                  <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.5s", animationDelay: "0.15s" }} />
-                  <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.7s", animationDelay: "0.3s" }} />
-                  <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.6s", animationDelay: "0.1s" }} />
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-jaune">Musique active</span>
-              </>
-            )}
-          </button>
+          {audioAvailable ? (
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl border border-white/10 transition-colors"
+              title={isMuted ? "Activer la musique d'ambiance" : "Couper la musique d'ambiance"}
+            >
+              {isMuted ? (
+                <>
+                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6L4.5 9H1.5v6h3l4.5 3.75V5.25z" />
+                  </svg>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Musique désactivée</span>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-end gap-[2px] h-3 w-4">
+                    <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.8s" }} />
+                    <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.5s", animationDelay: "0.15s" }} />
+                    <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.7s", animationDelay: "0.3s" }} />
+                    <span className="w-[3px] bg-jaune rounded-full animate-bounce" style={{ animationDuration: "0.6s", animationDelay: "0.1s" }} />
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-jaune">Musique active</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="text-[10px] text-white/30 uppercase tracking-wider">Musique indisponible</span>
+          )}
         </div>
       </div>
 
@@ -194,6 +199,7 @@ export default function CinematicShow({ items, onClose }: CinematicShowProps) {
         ref={audioRef}
         src="https://www.chosic.com/wp-content/uploads/2021/07/Warm-Memories-Emotional-Inspiring-Piano.mp3"
         loop
+        onError={() => setAudioAvailable(false)}
       />
     </div>
   );

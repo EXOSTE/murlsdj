@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import QRCode from "qrcode";
 import {
   getPendingMedia,
   approveMedia,
@@ -28,6 +29,7 @@ export default function Admin() {
   const [published, setPublished] = useState<MediaItem[]>([]);
   const [pendingComments, setPendingComments] = useState<CommentItem[]>([]);
   const [token, setTokenValue] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [access, setAccess] = useState<"loading" | "ok" | "unauthorized">("loading");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -185,6 +187,14 @@ export default function Admin() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    if (!token) { setQrDataUrl(null); return; }
+    const url = `${window.location.origin}/contribuer?token=${token}`;
+    QRCode.toDataURL(url, { width: 240, margin: 1, color: { dark: "#16479e", light: "#f8f7f2" } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [token]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -566,6 +576,21 @@ export default function Admin() {
 
               {token ? (
                 <>
+                  {/* QR Code */}
+                  {qrDataUrl && (
+                    <div className="flex flex-col items-center gap-2">
+                      <img src={qrDataUrl} alt="QR Code lien contribution" className="rounded-xl border border-blue-100" width={240} height={240} />
+                      <p className="text-xs text-slate-400">Scannez pour contribuer</p>
+                      <a
+                        href={qrDataUrl}
+                        download="qr-contribution-mur-lsdj.png"
+                        className="text-xs text-bleu underline hover:text-encre transition-colors"
+                      >
+                        Télécharger le QR Code
+                      </a>
+                    </div>
+                  )}
+
                   <div className="bg-creme/60 rounded-lg p-3 border border-blue-100">
                     <p className="text-xs text-slate-400 mb-1">URL complète</p>
                     <p className="text-sm font-mono text-slate-600 break-all">

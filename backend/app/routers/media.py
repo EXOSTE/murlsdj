@@ -252,7 +252,7 @@ def get_timeline(db: Session = Depends(get_db)):
     return [{"annee": r.annee, "count": r.count} for r in rows]
 
 
-@router.get("/upload-signature")
+@router.get("/upload-signature", dependencies=[Depends(rate_limit_upload)])
 def get_upload_signature():
     import cloudinary.utils, time
     timestamp = int(time.time())
@@ -392,6 +392,9 @@ def repost_media(media_id: str, action: str = "repost", db: Session = Depends(ge
     return {"reposts": m.reposts}
 
 
+REPORT_QUARANTINE_THRESHOLD = 5
+
+
 @router.post("/{media_id}/report", dependencies=[Depends(rate_limit_report)])
 def report_media(media_id: str, db: Session = Depends(get_db)):
     from uuid import UUID
@@ -405,6 +408,10 @@ def report_media(media_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Média introuvable")
 
     m.reports = (m.reports or 0) + 1
+    if m.reports >= REPORT_QUARANTINE_THRESHOLD:
+        m.status = MediaStatus.pending
+        m.approved_at = None
+        logger.warning("Média %s mis en quarantaine automatique (%d signalements)", media_id, m.reports)
     db.commit()
     return {"message": "Signalement enregistré"}
 

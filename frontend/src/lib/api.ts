@@ -117,6 +117,24 @@ export const reportMedia = async (id: string): Promise<void> => {
   await api.post(`/api/media/${id}/report`);
 };
 
+export const downloadMedia = async (url: string, filename: string): Promise<void> => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const ext = blob.type.startsWith("video") ? "mp4" : "jpg";
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `${filename}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(url, "_blank");
+  }
+};
+
 export const getPopularMedia = async (page = 1): Promise<PublicMediaResponse> => {
   const res = await api.get("/api/media/popular", { params: { page, per_page: 10 } });
   return res.data;
