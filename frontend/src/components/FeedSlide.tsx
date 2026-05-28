@@ -161,6 +161,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           muted
           loop
           playsInline
+          aria-hidden="true"
+          title={item.legende ?? "Vidéo — Mur LSDJ"}
         />
       ) : (
         <img
@@ -175,6 +177,8 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
       {!isKiosk && item.type === "video" && !isText && (
         <button
           onClick={toggleMute}
+          aria-label={muted ? "Activer le son" : "Couper le son"}
+          aria-pressed={!muted}
           className="absolute top-16 sm:top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white transition-colors hover:bg-black/60"
         >
           {muted ? (
@@ -213,7 +217,12 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
       {!isKiosk && (
         <div className="absolute bottom-20 sm:bottom-6 right-3 flex flex-col items-center gap-5 z-10">
           {/* Like */}
-          <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+          <button
+            onClick={handleLike}
+            aria-label={liked ? "Retirer le like" : "Liker ce souvenir"}
+            aria-pressed={liked}
+            className="flex flex-col items-center gap-1 group"
+          >
             <div className="relative w-8 h-8">
               <AnimatePresence>
                 {likeAnimating && (
@@ -245,14 +254,19 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           </button>
 
           {/* Commentaires */}
-          <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-1 group">
+          <button onClick={() => setShowComments(true)} aria-label="Voir les commentaires" className="flex flex-col items-center gap-1 group">
             <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
               <path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 0 0 6 21.75a6.721 6.721 0 0 0 3.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 0 1-.814 1.686.75.75 0 0 0 .44 1.223 6.676 6.676 0 0 0 .946.074Z" clipRule="evenodd" />
             </svg>
           </button>
 
           {/* Repost (deux flèches circulaires) */}
-          <button onClick={handleRepost} className="flex flex-col items-center gap-1 group">
+          <button
+            onClick={handleRepost}
+            aria-label={reposted ? "Annuler le repost" : "Reposter ce souvenir"}
+            aria-pressed={reposted}
+            className="flex flex-col items-center gap-1 group"
+          >
             <motion.div
               animate={repostAnimating ? { rotate: [0, 360] } : {}}
               transition={{ duration: 0.5 }}
@@ -268,7 +282,7 @@ export default function FeedSlide({ item, isActive, isKiosk }: FeedSlideProps) {
           </button>
 
           {/* Partage (flèche courbée) */}
-          <button onClick={handleOpenShare} className="flex flex-col items-center gap-1 group">
+          <button onClick={handleOpenShare} aria-label="Partager ce souvenir" className="flex flex-col items-center gap-1 group">
             <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white/80 group-hover:fill-white drop-shadow transition-colors">
               <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z" />
             </svg>

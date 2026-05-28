@@ -8,6 +8,7 @@ from app.database import Base, engine
 from app.models.media import Media
 from app.models.comment import Comment
 from app.models.settings import Setting
+from app.models.rate_limit import RateLimit  # noqa — registers table for create_all
 
 # Create database tables automatically
 try:
@@ -15,8 +16,13 @@ try:
 except Exception as e:
     print(f"Warning: Database initialization failed: {e}")
 
-# Migrations inline — chaque colonne dans sa propre connexion pour éviter
-# que PostgreSQL laisse la transaction en état d'erreur après un "column already exists"
+# Migrations inline (fallback de sécurité) — les migrations officielles sont dans
+# backend/alembic/versions/001_initial_schema.py (Alembic).
+# Ces ALTER TABLE restent ici comme garde-fou pour les colonnes ajoutées après la
+# création initiale de la table, notamment sur les environnements qui n'ont pas encore
+# lancé `alembic upgrade head`.
+# Chaque colonne est traitée dans sa propre connexion pour éviter que PostgreSQL
+# laisse la transaction en état d'erreur après un "column already exists".
 from sqlalchemy import text
 _new_columns = [
     ("media", "uploaded_by", "VARCHAR(255)"),

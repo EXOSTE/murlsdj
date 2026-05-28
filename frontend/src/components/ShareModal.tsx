@@ -90,6 +90,9 @@ export default function ShareModal({ mediaId, legende, fileUrl, thumbnailUrl, me
       >
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Partager ce souvenir"
           className="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm p-6 space-y-3"
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

@@ -22,7 +22,11 @@ type Tab = "pending" | "published" | "comments" | "token";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [secret, setSecret] = useState<string>(() => searchParams.get("secret") ?? "");
+  const [secret, setSecret] = useState<string>(() => {
+    const fromUrl = searchParams.get("secret");
+    if (fromUrl) return fromUrl;
+    return sessionStorage.getItem("admin_secret") ?? "";
+  });
 
   const [tab, setTab] = useState<Tab>("pending");
   const [pending, setPending] = useState<MediaItem[]>([]);
@@ -203,6 +207,7 @@ export default function Admin() {
     setAccess("loading");
     try {
       await getPendingMedia(inputSecret.trim());
+      sessionStorage.setItem("admin_secret", inputSecret.trim());
       setSecret(inputSecret.trim());
       setAccess("ok");
     } catch (err: any) {
@@ -212,6 +217,7 @@ export default function Admin() {
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem("admin_secret");
     setSecret("");
     setAccess("unauthorized");
   };

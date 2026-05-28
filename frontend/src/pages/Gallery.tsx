@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import MasonryGrid from "../components/MasonryGrid";
 import Lightbox from "../components/Lightbox";
 import CinematicShow from "../components/CinematicShow";
+import Navbar from "../components/Navbar";
 import { getPublicMedia, getTimeline } from "../lib/api";
 import type { MediaItem } from "../lib/api";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 export default function Gallery() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -124,28 +125,7 @@ export default function Gallery() {
 
   return (
     <div className="min-h-screen bg-creme">
-      {/* Header */}
-      <header className="border-b border-blue-100 bg-white px-6 py-5 flex items-center justify-between">
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-jaune rounded-full" />
-            <Link to="/" className="font-serif text-encre text-xl hover:text-bleu transition-colors">
-              Mur LSDJ
-            </Link>
-          </div>
-          <nav className="flex gap-6 text-sm text-slate-400">
-            <Link to="/timeline" className="hover:text-bleu transition-colors">
-              Timeline
-            </Link>
-            <Link to="/galerie" className="text-bleu font-medium">
-              Galerie
-            </Link>
-            <Link to="/histoire" className="hover:text-bleu transition-colors">
-              Notre histoire
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

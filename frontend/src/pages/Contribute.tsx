@@ -270,7 +270,8 @@ export default function Contribute() {
                     className="mt-0.5 accent-bleu shrink-0"
                   />
                   <span className="text-xs text-slate-500 leading-relaxed">
-                    J'atteste avoir le droit de partager ce contenu et j'accepte qu'il soit publié après validation.
+                    J'atteste avoir le droit de partager ce contenu et j'accepte qu'il soit publié après validation.{" "}
+                    <Link to="/mentions-legales" target="_blank" className="text-bleu hover:underline">Mentions légales & RGPD</Link>
                   </span>
                 </label>
 
