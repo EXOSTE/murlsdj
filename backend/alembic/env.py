@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import Base
 import app.models.media  # noqa
+import app.models.comment  # noqa
 import app.models.settings  # noqa
 
 config = context.config

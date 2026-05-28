@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Disallow: /contribuer
+
+Sitemap: https://murlsdj.fr/sitemap.xml

@@ -3,20 +3,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.comment import Comment
-from app.routers.media import InMemoryRateLimiter
+from app.services.rate_limiter import is_allowed as db_rate_allowed
 
 router = APIRouter(prefix="/api/comments", tags=["comments"])
 
-comment_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
 
-
-def rate_limit_comment(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not comment_limiter.is_allowed(client_ip):
-        raise HTTPException(
-            status_code=429,
-            detail="Trop de commentaires soumis. Veuillez patienter une minute."
-        )
+def rate_limit_comment(request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else "unknown"
+    if not db_rate_allowed(db, "comment", ip, limit=10, window_seconds=60):
+        raise HTTPException(429, detail="Trop de commentaires soumis. Veuillez patienter une minute.")
 
 
 @router.post("/{media_id}", dependencies=[Depends(rate_limit_comment)])

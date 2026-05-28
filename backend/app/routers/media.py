@@ -1,6 +1,4 @@
 import logging
-import time
-from collections import defaultdict
 from datetime import date
 from typing import Optional
 
@@ -10,70 +8,39 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.media import Media, MediaStatus, MediaType
 from app.services.cloudinary_service import upload_file
+from app.services.rate_limiter import is_allowed as db_rate_allowed
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class InMemoryRateLimiter:
-    def __init__(self, requests_limit: int, window_seconds: int):
-        self.requests_limit = requests_limit
-        self.window_seconds = window_seconds
-        self.history = defaultdict(list)
-
-    def is_allowed(self, client_ip: str) -> bool:
-        now = time.time()
-        self.history[client_ip] = [
-            t for t in self.history[client_ip]
-            if now - t < self.window_seconds
-        ]
-        if len(self.history[client_ip]) >= self.requests_limit:
-            return False
-        self.history[client_ip].append(now)
-        return True
+def _ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
 
 
-signature_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
-register_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
-like_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=60)
-share_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
-report_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=300)
+def rate_limit_upload(request: Request, db: Session = Depends(get_db)):
+    if not db_rate_allowed(db, "upload", _ip(request), limit=10, window_seconds=60):
+        raise HTTPException(429, detail="Trop de tentatives d'upload. Veuillez patienter une minute.")
 
 
-def rate_limit_upload(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not signature_limiter.is_allowed(client_ip):
-        raise HTTPException(
-            status_code=429,
-            detail="Trop de tentatives d'upload. Veuillez patienter une minute."
-        )
+def rate_limit_register(request: Request, db: Session = Depends(get_db)):
+    if not db_rate_allowed(db, "register", _ip(request), limit=10, window_seconds=60):
+        raise HTTPException(429, detail="Trop de tentatives d'upload. Veuillez patienter une minute.")
 
 
-def rate_limit_register(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not register_limiter.is_allowed(client_ip):
-        raise HTTPException(
-            status_code=429,
-            detail="Trop de tentatives d'upload. Veuillez patienter une minute."
-        )
+def rate_limit_like(request: Request, db: Session = Depends(get_db)):
+    if not db_rate_allowed(db, "like", _ip(request), limit=3, window_seconds=60):
+        raise HTTPException(429, detail="Trop de likes. Veuillez patienter.")
 
 
-def rate_limit_like(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not like_limiter.is_allowed(client_ip):
-        raise HTTPException(status_code=429, detail="Trop de likes. Veuillez patienter.")
+def rate_limit_share(request: Request, db: Session = Depends(get_db)):
+    if not db_rate_allowed(db, "share", _ip(request), limit=10, window_seconds=60):
+        raise HTTPException(429, detail="Trop de partages. Veuillez patienter.")
 
 
-def rate_limit_share(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not share_limiter.is_allowed(client_ip):
-        raise HTTPException(status_code=429, detail="Trop de partages. Veuillez patienter.")
-
-
-def rate_limit_report(request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not report_limiter.is_allowed(client_ip):
-        raise HTTPException(status_code=429, detail="Signalement déjà enregistré.")
+def rate_limit_report(request: Request, db: Session = Depends(get_db)):
+    if not db_rate_allowed(db, "report", _ip(request), limit=3, window_seconds=300):
+        raise HTTPException(429, detail="Signalement déjà enregistré.")
 
 
 router = APIRouter(prefix="/api/media", tags=["media"])

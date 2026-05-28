@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import MediaCard from "../components/MediaCard";
 import Lightbox from "../components/Lightbox";
 import CinematicShow from "../components/CinematicShow";
@@ -87,26 +88,7 @@ export default function Timeline() {
 
   return (
     <div className="min-h-screen bg-creme">
-      {/* Header */}
-      <header className="border-b border-blue-100 px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-jaune rounded-full" />
-          <Link to="/" className="font-serif text-encre text-xl hover:text-bleu transition-colors">
-            Mur LSDJ
-          </Link>
-        </div>
-        <nav className="flex gap-6 text-sm text-slate-400">
-          <Link to="/timeline" className="text-bleu font-medium">
-            Timeline
-          </Link>
-          <Link to="/galerie" className="hover:text-bleu transition-colors">
-            Galerie
-          </Link>
-          <Link to="/histoire" className="hover:text-bleu transition-colors">
-            Notre histoire
-          </Link>
-        </nav>
-      </header>
+      <Navbar />
 
       <div className="max-w-6xl mx-auto px-4 py-10 flex flex-col md:flex-row gap-8">
         {/* Sidebar années */}

@@ -1,7 +1,9 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MediaItem, CommentItem } from "../lib/api";
 import { getComments, createComment, downloadMedia } from "../lib/api";
+import { useMediaMeta } from "../hooks/useMediaMeta";
 
 interface LightboxProps {
   items: MediaItem[];
@@ -15,6 +17,7 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
   const item = items[currentIndex];
   const isText = item?.file_url?.startsWith("text://");
   const authorName = isText ? item.file_url.replace("text://", "") : "";
+  const meta = useMediaMeta(item ?? null);
 
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[]>([]);
@@ -107,33 +110,46 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
     }
   };
 
-  if (!item) return null;
-
-  let touchStartX = 0;
-  let touchEndX = 0;
+  const touchStartX = useRef(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX = e.changedTouches[0].clientX;
+    touchStartX.current = e.changedTouches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
-    const threshold = 50;
-    if (diff > threshold) {
-      onNext();
-    } else if (diff < -threshold) {
-      onPrev();
-    }
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50) onNext();
+    else if (diff < -50) onPrev();
   };
 
+  if (!item) return null;
+
   return (
+    <>
+      {meta && (
+        <Helmet>
+          <title>{meta.title}</title>
+          <meta name="description" content={meta.description} />
+          <meta property="og:title" content={meta.title} />
+          <meta property="og:description" content={meta.description} />
+          <meta property="og:type" content={meta.ogType} />
+          <meta property="og:url" content={meta.ogUrl} />
+          {meta.ogImage && <meta property="og:image" content={meta.ogImage} />}
+          <meta name="twitter:card" content={meta.twitterCard} />
+          <meta name="twitter:title" content={meta.title} />
+          <meta name="twitter:description" content={meta.description} />
+          {meta.ogImage && <meta name="twitter:image" content={meta.ogImage} />}
+        </Helmet>
+      )}
     <AnimatePresence>
       <motion.div
         key="lightbox"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.legende ?? "Souvenir"}
         className="fixed inset-0 z-50 bg-encre/98 flex flex-col md:flex-row items-stretch select-none"
         onClick={onClose}
       >
@@ -416,5 +432,6 @@ export default function Lightbox({ items, currentIndex, onClose, onPrev, onNext 
         </AnimatePresence>
       </motion.div>
     </AnimatePresence>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Navbar from "../components/Navbar";
 
 const MILESTONES = [
   { year: "1996", title: "Fondation", desc: "Création du Silence des Justes par un groupe d'éducateurs et de familles engagées à Paris." },
@@ -21,19 +22,7 @@ export default function About() {
       {/* Top accent bar */}
       <div className="h-1.5 bg-gradient-to-r from-bleu via-jaune to-bleu w-full" />
 
-      {/* Header */}
-      <header className="max-w-4xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 bg-jaune rounded-full" />
-          <Link to="/" className="font-serif text-encre text-xl hover:text-bleu transition-colors">
-            Mur LSDJ
-          </Link>
-        </div>
-        <nav className="flex gap-6 text-sm text-slate-400">
-          <Link to="/timeline" className="hover:text-bleu transition-colors">Timeline</Link>
-          <Link to="/galerie" className="hover:text-bleu transition-colors">Galerie</Link>
-        </nav>
-      </header>
+      <Navbar maxWidth="4xl" />
 
       {/* Hero section */}
       <main className="max-w-4xl mx-auto px-6 py-12 relative z-10">

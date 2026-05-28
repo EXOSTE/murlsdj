@@ -9,6 +9,11 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#16479E" />
 
+    <!-- Preconnect pour Cloudinary (LCP images/vidéos) -->
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <link rel="preconnect" href="https://api.cloudinary.com" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- SEO -->
@@ -30,6 +35,23 @@
     <meta name="twitter:title" content="Mur LSDJ — Une infinité d'histoires" />
     <meta name="twitter:description" content="30 ans de souvenirs collectifs du Silence des Justes (1996–2026)." />
     <meta name="twitter:image" content="https://murlsdj.vercel.app/favicon.png" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://murlsdj.vercel.app" />
+
+    <!-- JSON-LD Organisation -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Le Silence des Justes",
+      "url": "https://murlsdj.vercel.app",
+      "logo": "https://murlsdj.vercel.app/favicon.png",
+      "description": "30 ans de souvenirs collectifs du Silence des Justes (1996–2026).",
+      "foundingDate": "1996",
+      "address": { "@type": "PostalAddress", "addressCountry": "FR" }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
