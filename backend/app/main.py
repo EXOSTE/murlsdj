@@ -15,7 +15,8 @@ try:
 except Exception as e:
     print(f"Warning: Database initialization failed: {e}")
 
-# Migrations inline pour les colonnes ajoutées après la création initiale
+# Migrations inline — chaque colonne dans sa propre connexion pour éviter
+# que PostgreSQL laisse la transaction en état d'erreur après un "column already exists"
 from sqlalchemy import text
 _new_columns = [
     ("media", "uploaded_by", "VARCHAR(255)"),
@@ -24,16 +25,13 @@ _new_columns = [
     ("media", "shares", "INTEGER NOT NULL DEFAULT 0"),
     ("media", "reports", "INTEGER NOT NULL DEFAULT 0"),
 ]
-try:
-    with engine.connect() as _conn:
-        for _table, _col, _definition in _new_columns:
-            try:
-                _conn.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_col} {_definition}"))
-                _conn.commit()
-            except Exception:
-                pass  # Colonne déjà existante
-except Exception as e:
-    print(f"Warning: Migration failed: {e}")
+for _table, _col, _definition in _new_columns:
+    try:
+        with engine.connect() as _c:
+            _c.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_col} {_definition}"))
+            _c.commit()
+    except Exception:
+        pass  # Colonne déjà existante
 
 app = FastAPI(title="Mur LSDJ — Une infinité d'histoires", version="1.0.0")
 

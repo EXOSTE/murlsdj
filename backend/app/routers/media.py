@@ -33,7 +33,8 @@ class InMemoryRateLimiter:
         return True
 
 
-upload_limiter = InMemoryRateLimiter(requests_limit=5, window_seconds=60)
+signature_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
+register_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
 like_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=60)
 share_limiter = InMemoryRateLimiter(requests_limit=10, window_seconds=60)
 report_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=300)
@@ -41,7 +42,16 @@ report_limiter = InMemoryRateLimiter(requests_limit=3, window_seconds=300)
 
 def rate_limit_upload(request: Request):
     client_ip = request.client.host if request.client else "unknown"
-    if not upload_limiter.is_allowed(client_ip):
+    if not signature_limiter.is_allowed(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Trop de tentatives d'upload. Veuillez patienter une minute."
+        )
+
+
+def rate_limit_register(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not register_limiter.is_allowed(client_ip):
         raise HTTPException(
             status_code=429,
             detail="Trop de tentatives d'upload. Veuillez patienter une minute."
@@ -267,7 +277,7 @@ def get_upload_signature():
     }
 
 
-@router.post("/register", dependencies=[Depends(rate_limit_upload)])
+@router.post("/register", dependencies=[Depends(rate_limit_register)])
 def register_media(
     file_url: str = Form(...),
     public_id: str = Form(...),
