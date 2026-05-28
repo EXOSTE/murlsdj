@@ -6,11 +6,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-gsap': ['gsap'],
-          'vendor-ui': ['qrcode', 'react-helmet-async'],
+        manualChunks(id) {
+          if (id.includes('react-dom') || id.includes('react-router-dom') || (id.includes('node_modules/react/') && !id.includes('react-dom'))) return 'vendor-react'
+          if (id.includes('framer-motion')) return 'vendor-motion'
+          if (id.includes('gsap')) return 'vendor-gsap'
+          if (id.includes('qrcode') || id.includes('react-helmet-async')) return 'vendor-ui'
         },
       },
     },
