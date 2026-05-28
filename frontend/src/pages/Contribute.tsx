@@ -18,6 +18,9 @@ export default function Contribute() {
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isVideoFile = (f: File) =>
+    f.type.startsWith("video/") || /\.(mp4|mov|webm|avi|mkv|m4v|3gp)$/i.test(f.name);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
@@ -56,7 +59,7 @@ export default function Contribute() {
     // Photo / vidéo — upload direct Cloudinary (bypasse la limite Vercel)
     try {
       const sig = await getUploadSignature();
-      const resourceType = file!.type.startsWith("video/") ? "video" : "image";
+      const resourceType = isVideoFile(file!) ? "video" : "image";
 
       const cdnForm = new FormData();
       cdnForm.append("file", file!);
@@ -194,8 +197,14 @@ export default function Contribute() {
                       className="border-2 border-dashed border-blue-100 rounded-xl p-4 text-center cursor-pointer hover:border-bleu transition-colors"
                     >
                       {preview ? (
-                        file?.type.startsWith("video") ? (
-                          <video src={preview} className="mx-auto max-h-36 rounded-lg" controls />
+                        file && isVideoFile(file) ? (
+                          <video
+                            src={preview}
+                            className="mx-auto max-h-36 rounded-lg"
+                            controls
+                            playsInline
+                            onClick={(e) => e.stopPropagation()}
+                          />
                         ) : (
                           <img src={preview} alt="aperçu" className="mx-auto max-h-36 rounded-lg object-contain" />
                         )

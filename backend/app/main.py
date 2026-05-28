@@ -18,6 +18,8 @@ except Exception as e:
 # Migrations inline pour les colonnes ajoutées après la création initiale
 from sqlalchemy import text
 _new_columns = [
+    ("media", "uploaded_by", "VARCHAR(255)"),
+    ("media", "likes", "INTEGER NOT NULL DEFAULT 0"),
     ("media", "reposts", "INTEGER NOT NULL DEFAULT 0"),
     ("media", "shares", "INTEGER NOT NULL DEFAULT 0"),
     ("media", "reports", "INTEGER NOT NULL DEFAULT 0"),
